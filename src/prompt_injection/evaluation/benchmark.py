@@ -805,9 +805,16 @@ class BenchmarkRunner:
         train_ids = {record.id for record in train_dataset.records()}
         synthetic_ids = {record.id for record in synthetic_test_dataset.records()}
         real_ids = {record.id for record in real_world_test_dataset.records()}
+        train_texts = {" ".join(record.text.lower().split()) for record in train_dataset.records()}
+        synthetic_texts = {" ".join(record.text.lower().split()) for record in synthetic_test_dataset.records()}
+        real_texts = {" ".join(record.text.lower().split()) for record in real_world_test_dataset.records()}
         if train_ids & synthetic_ids:
             raise ValueError("train_dataset and synthetic_test_dataset must be disjoint.")
         if train_ids & real_ids:
             raise ValueError("train_dataset and real_world_test_dataset must be disjoint.")
         if synthetic_ids & real_ids:
             raise ValueError("synthetic_test_dataset and real_world_test_dataset must be disjoint.")
+        if train_texts & synthetic_texts:
+            raise ValueError("train_dataset and synthetic_test_dataset must be text-disjoint.")
+        if train_texts & real_texts:
+            raise ValueError("train_dataset and real_world_test_dataset must be text-disjoint.")

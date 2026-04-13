@@ -262,7 +262,7 @@ def _heuristic_score(text: str, hits: list[HitRecord], *, original_text: str | N
     # Any evasion-category hit guarantees the score clears the default 0.50 threshold.
     evasion_hits = [h for h in hits if h.category == "evasion"]
     if evasion_hits:
-        base = max(base, 0.60)
+        pattern_component = max(pattern_component, 0.60)
 
     # Semantic similarity against injection prototypes.
     semantic_component = _semantic_injection_similarity(text)
@@ -281,6 +281,11 @@ def _heuristic_score(text: str, hits: list[HitRecord], *, original_text: str | N
             evasion += 0.05
         if original_text and sig.search(original_text):
             evasion += 0.05
+    if original_text is not None:
+        compact_orig = "".join(original_text.lower().split())
+        compact_norm = "".join(text.lower().split())
+        if compact_orig != compact_norm and ("ignore" in compact_norm or "prompt" in compact_norm):
+            evasion += 0.08
     evasion = min(evasion, 0.15)
 
     # Multi-category bonus
@@ -289,12 +294,14 @@ def _heuristic_score(text: str, hits: list[HitRecord], *, original_text: str | N
 
     # Weighted final score (pattern > semantic > token features > penalties).
     raw = (
-        0.55 * pattern_component
-        + 0.25 * semantic_component
+        0.70 * pattern_component
+        + 0.20 * semantic_component
         + 0.15 * token_component
         + evasion
         + multi_bonus
     )
+    if evasion_hits:
+        raw = max(raw, 0.60)
     return round(min(raw, 1.0), 4)
 
 
@@ -479,6 +486,16 @@ class InjectionDetector:
 
         normalized_text = _normalize_for_detection(text)
         hits = self._run_patterns(normalized_text)
+        if self._is_obfuscated_attack(text, normalized_text):
+            hits.append(
+                HitRecord(
+                    pattern_id="EVA-NORM-001",
+                    category="evasion",
+                    severity="medium",
+                    description="Normalization revealed obfuscated injection-like intent",
+                    matched_span=None,
+                )
+            )
         categories = sorted({h.category for h in hits})
 
         if self.mode == "rules":
@@ -570,3 +587,29 @@ class InjectionDetector:
             return None
         except Exception:  # pragma: no cover
             return None
+
+    @staticmethod
+    def _is_obfuscated_attack(original_text: str, normalized_text: str) -> bool:
+        compact_orig = "".join(original_text.lower().split())
+        compact_norm = "".join(normalized_text.lower().split())
+        changed = compact_orig != compact_norm
+        lower_norm = normalized_text.lower()
+        suspicious_norm = any(
+            phrase in lower_norm
+            for phrase in (
+                "ignore previous instructions",
+                "reveal your system prompt",
+                "bypass",
+                "override",
+            )
+        )
+        suspicious_compact = any(
+            phrase in compact_norm
+            for phrase in (
+                "ignorepreviousinstructions",
+                "revealyoursystemprompt",
+                "bypass",
+                "override",
+            )
+        )
+        return changed and (suspicious_norm or suspicious_compact)

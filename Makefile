@@ -82,7 +82,13 @@ ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); \
 tr, te = ds.train_test_split(0.20, seed=42); \
 rw = SyntheticDataset(); \
 [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; \
-result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, te); \
+ext = SyntheticDataset(); \
+ext_path = pathlib.Path('data/external/hackaprompt_like.jsonl'); \
+ext.load_external_dataset(ext_path, train_texts=set(tr.texts())) if ext_path.exists() else None; \
+benign = SyntheticDataset(); \
+benign_path = pathlib.Path('data/benign/benign_corpus.jsonl'); \
+benign.load_from_path(benign_path) if benign_path.exists() else None; \
+result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, te, external_eval_dataset=(ext if len(ext) else None), benign_dataset=(benign if len(benign) else None)); \
 s = ReportSerializer(result); \
 s.print_summary(); \
 pathlib.Path('reports').mkdir(exist_ok=True); \

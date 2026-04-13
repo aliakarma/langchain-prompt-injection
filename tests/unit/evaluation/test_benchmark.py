@@ -132,6 +132,12 @@ class TestConfigResultMetrics:
         assert len(benchmark_result.benign_fpr) == 3
         assert len(benchmark_result.white_box_metrics) == 3
 
+    def test_confidence_intervals_domain_shift_and_failure_cases_present(self, benchmark_result):
+        assert len(benchmark_result.confidence_intervals) == 3
+        assert len(benchmark_result.domain_shift) == 3
+        assert "missed_attacks" in benchmark_result.failure_cases
+        assert "false_positives" in benchmark_result.failure_cases
+
     def test_sweep_populated_for_b_and_c(self, benchmark_result):
         assert len(benchmark_result.config_b.sweep) > 0
         assert len(benchmark_result.config_c.sweep) > 0

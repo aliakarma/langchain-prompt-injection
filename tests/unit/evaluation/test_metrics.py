@@ -11,12 +11,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "sr
 
 from prompt_injection.evaluation.metrics import (
     ConfusionMatrix,
+    MetricCI,
     MetricsReport,
     ThresholdPoint,
     _average_precision,
     _confusion,
     _precision_recall_f1,
     _roc_auc,
+    bootstrap_confidence_intervals,
+    compute_false_positive_rate,
     compute_metrics,
     per_category_metrics,
     threshold_sweep,
@@ -186,3 +189,16 @@ class TestPerCategoryMetrics:
         assert first.n_samples == 6
         assert first.n_samples == second.n_samples
         assert first.f1 == second.f1
+
+
+class TestAdditionalMetrics:
+    def test_false_positive_rate(self):
+        y_true = [0, 0, 0, 0, 1, 1]
+        y_pred = [1, 0, 0, 0, 1, 1]
+        assert compute_false_positive_rate(y_true, y_pred) == 0.25
+
+    def test_bootstrap_confidence_intervals_schema(self):
+        ci = bootstrap_confidence_intervals(Y_TRUE, Y_SCORE, n_bootstrap=50, seed=7)
+        assert "f1" in ci and "roc_auc" in ci
+        assert isinstance(ci["f1"], MetricCI)
+        assert 0.0 <= ci["f1"].lower <= ci["f1"].upper <= 1.0

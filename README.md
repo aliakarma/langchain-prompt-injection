@@ -10,6 +10,8 @@ Three detection configurations · Full evaluation suite · Formal threat model �
 
 Prompt-injection attacks occur when untrusted content (user input, retrieved documents, tool outputs) attempts to override a language model's instructions. This package provides a drop-in `AgentMiddleware` for LangChain that intercepts all four agent execution hooks and applies configurable detection and policy logic before any content reaches the LLM.
 
+> **Research warning:** performance on unseen, out-of-domain prompts is materially lower than synthetic in-distribution performance. Always report real/external-set metrics as primary and treat synthetic metrics as an upper-bound diagnostic only.
+
 ```
 User input / RAG chunks / tool outputs
            ↓
@@ -164,7 +166,7 @@ Windows PowerShell:
 
 ```powershell
 $env:PYTHONPATH = "src"
-python -c "import sys; sys.path.insert(0,'src'); from prompt_injection.evaluation.dataset import SyntheticDataset; from prompt_injection.evaluation.benchmark import BenchmarkRunner; from prompt_injection.evaluation.report import ReportSerializer; import pathlib; ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); tr, te = ds.train_test_split(0.20, seed=42); rw = SyntheticDataset(); [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; result = BenchmarkRunner(n_latency_runs=30).run(tr, te, rw); s = ReportSerializer(result); s.print_summary(); pathlib.Path('reports').mkdir(exist_ok=True); s.to_json('reports/benchmark.json'); s.to_csv('reports/benchmark.csv'); s.category_csv('reports/category_breakdown.csv')"
+python -c "import sys; sys.path.insert(0,'src'); from prompt_injection.evaluation.dataset import SyntheticDataset; from prompt_injection.evaluation.benchmark import BenchmarkRunner; from prompt_injection.evaluation.report import ReportSerializer; import pathlib; ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); tr, syn_te = ds.train_test_split(0.20, seed=42); rw = SyntheticDataset(); [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; ext = SyntheticDataset(); ext_path = pathlib.Path('data/external/hackaprompt_like.jsonl'); ext.load_external_dataset(ext_path, train_texts=set(tr.texts())) if ext_path.exists() else None; result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, syn_te, external_eval_dataset=(ext if len(ext) else None)); s = ReportSerializer(result); s.print_summary(); pathlib.Path('reports').mkdir(exist_ok=True); s.to_json('reports/benchmark.json'); s.to_csv('reports/benchmark.csv'); s.category_csv('reports/category_breakdown.csv')"
 ```
 
 Expected benchmark artifacts:
@@ -303,11 +305,25 @@ ReportSerializer(result).print_summary()
 The benchmark is intentionally split into separate evaluation sets:
 
 - Synthetic held-out data gives an in-distribution upper bound.
-- Real-world data is the primary result and is never used for training.
+- Real-world data plus optional external data (HackAPrompt/BIPIA-style files) is the primary result and is never used for training.
 - Cross-validation is run only on the synthetic training split.
-- Additional checks include benign-only false-positive rate, white-box evasion cases, and full-corpus latency profiling.
+- Additional checks include benign-only false-positive rate, white-box evasion cases, bootstrap confidence intervals, and full-corpus latency profiling.
 
 Use the real-world table as the reportable primary metric set. Synthetic numbers are useful for debugging and sanity checks, but they should not be presented as the main result.
+
+### External Datasets
+
+External datasets can be loaded with schema normalization and deduplication:
+
+```python
+from prompt_injection.evaluation import SyntheticDataset
+
+external = SyntheticDataset()
+external.load_external_dataset("data/external/hackaprompt_like.jsonl", train_texts=set(train_ds.texts()))
+```
+
+Supported formats: `.jsonl`, `.json`, `.csv`.
+Supported fields are auto-mapped to canonical schema: `{id, text, label, attack_category, source_type}`.
 
 ### Metrics API
 
