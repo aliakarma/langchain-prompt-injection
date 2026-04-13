@@ -418,7 +418,7 @@ class SyntheticDataset:
             raise FileNotFoundError(f"Dataset file not found: {p}")
 
         loaded: list[DataRecord] = []
-        with p.open("r", encoding="utf-8") as fh:
+        with p.open("r", encoding="utf-8-sig") as fh:
             for line in fh:
                 line = line.strip()
                 if not line:
