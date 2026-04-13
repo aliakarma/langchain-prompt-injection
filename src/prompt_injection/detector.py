@@ -206,7 +206,7 @@ def _maybe_decode_base64(text: str) -> str:
 
 
 def _maybe_decode_rot13(text: str) -> str:
-    if "rot13" in text.lower() or re.search(r"\b[a-z]{10,}\b", text, flags=re.IGNORECASE):
+    if "rot13:" in text.lower() or "rot_13:" in text.lower():
         decoded = codecs.decode(text, "rot_13")
         if decoded != text:
             return text + "\n[decoded_rot13] " + decoded
