@@ -184,6 +184,8 @@ def _normalize_homoglyphs(text: str) -> str:
 def _collapse_spacing_obfuscation(text: str) -> str:
     # Collapse sequences like "i g n o r e" into "ignore" for detection.
     text = re.sub(r"\b(?:[A-Za-z]\s+){3,}[A-Za-z]\b", lambda m: m.group(0).replace(" ", ""), text)
+    # Also collapse repeated obfuscated keyword chunks while preserving boundaries.
+    text = re.sub(r"\bignore\s+previous\s+instructions\b", "ignore previous instructions", text, flags=re.IGNORECASE)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
