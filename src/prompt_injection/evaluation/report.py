@@ -59,6 +59,10 @@ class ReportSerializer:
             print("\n── Out-of-Distribution Primary Result ─────────────────────────────")
             print(self.result.dataset_table("Real-world test", self.result.real_world_metrics))
 
+        if self.result.external_metrics:
+            print("\n── External Dataset Result ───────────────────────────────────────")
+            print(self.result.dataset_table("External test", self.result.external_metrics))
+
         if self.result.synthetic_baseline_metrics:
             print("\n── Synthetic Baseline ─────────────────────────────────────────────")
             print(self.result.baseline_table("Keyword baseline", self.result.synthetic_baseline_metrics))
@@ -97,6 +101,27 @@ class ReportSerializer:
                     )
                 )
 
+        if self.result.confidence_intervals:
+            print("\n── Bootstrap Confidence Intervals (Primary) ─────────────────────")
+            for name, ci_map in self.result.confidence_intervals.items():
+                f1_ci = ci_map.get("f1")
+                auc_ci = ci_map.get("roc_auc")
+                if f1_ci is None or auc_ci is None:
+                    continue
+                print(
+                    f"  [{name}] F1={f1_ci.mean:.4f} [{f1_ci.lower:.4f}, {f1_ci.upper:.4f}]"
+                    f"   AUC={auc_ci.mean:.4f} [{auc_ci.lower:.4f}, {auc_ci.upper:.4f}]"
+                )
+
+        if self.result.domain_shift:
+            print("\n── Cross-Dataset Generalization Gap ─────────────────────────────")
+            for name, gap in self.result.domain_shift.items():
+                print(
+                    f"  [{name}] ΔF1(syn→primary)={gap.get('f1_drop_vs_synthetic', 0.0):.4f}"
+                    f"   ΔAUC(syn→primary)={gap.get('auc_drop_vs_synthetic', 0.0):.4f}"
+                    f"   ΔF1(primary→external)={gap.get('f1_drop_primary_to_external', 0.0):.4f}"
+                )
+
         if self.result.benign_fpr:
             print("\n── False Positive Rate on Benign Data ─────────────────────────────")
             for name, value in self.result.benign_fpr.items():
@@ -105,6 +130,17 @@ class ReportSerializer:
         if self.result.white_box_metrics:
             print("\n── White-Box Evasion Benchmark ───────────────────────────────────")
             print(self.result.dataset_table("White-box evasion", self.result.white_box_metrics))
+
+        if self.result.failure_cases:
+            print("\n── Failure Analysis (Top Cases) ─────────────────────────────────")
+            for key in ("missed_attacks", "false_positives"):
+                cases = self.result.failure_cases.get(key, [])
+                print(f"  {key}: {len(cases)} examples")
+                for case in cases[:5]:
+                    print(
+                        f"    - {case.get('id')} | risk={float(case.get('risk', 0.0)):.3f}"
+                        f" | {str(case.get('text', ''))[:90]}"
+                    )
 
         best = self.result.best_f1()
         fast = self.result.fastest()
@@ -159,6 +195,9 @@ class ReportSerializer:
                 name: m.to_dict()
                 for name, m in result.real_world_metrics.items()
             },
+            "external_metrics": {
+                name: m.to_dict() for name, m in result.external_metrics.items()
+            },
             "synthetic_baseline_metrics": {
                 name: m.to_dict() for name, m in result.synthetic_baseline_metrics.items()
             },
@@ -180,6 +219,21 @@ class ReportSerializer:
                 }
                 for name, summary in result.cross_validation.items()
             },
+            "confidence_intervals": {
+                name: {
+                    metric: {
+                        "metric": ci.metric,
+                        "mean": ci.mean,
+                        "lower": ci.lower,
+                        "upper": ci.upper,
+                        "confidence": ci.confidence,
+                    }
+                    for metric, ci in ci_map.items()
+                }
+                for name, ci_map in result.confidence_intervals.items()
+            },
+            "domain_shift": result.domain_shift,
+            "failure_cases": result.failure_cases,
         }
 
     # ------------------------------------------------------------------

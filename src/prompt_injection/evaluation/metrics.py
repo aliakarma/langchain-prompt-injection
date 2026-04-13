@@ -135,6 +135,17 @@ class ThresholdPoint:
     fn: int
 
 
+@dataclass
+class MetricCI:
+    """Bootstrap confidence interval for one metric."""
+
+    metric: str
+    mean: float
+    lower: float
+    upper: float
+    confidence: float = 0.95
+
+
 # ---------------------------------------------------------------------------
 # Core metric helpers (pure Python — no sklearn required for basic metrics)
 # ---------------------------------------------------------------------------
@@ -401,3 +412,74 @@ def per_category_metrics(
         results[cat] = compute_metrics(yt, yp, ys, config_name=cat)
 
     return results
+
+
+def compute_false_positive_rate(y_true: list[int], y_pred: list[int]) -> float:
+    """Compute false positive rate on a binary classification output."""
+    cm = _confusion(y_true, y_pred)
+    negatives = cm.fp + cm.tn
+    if negatives == 0:
+        return 0.0
+    return round(cm.fp / negatives, 4)
+
+
+def bootstrap_confidence_intervals(
+    y_true: list[int],
+    y_scores: list[float],
+    *,
+    threshold: float = 0.50,
+    n_bootstrap: int = 500,
+    confidence: float = 0.95,
+    seed: int = 42,
+) -> dict[str, MetricCI]:
+    """
+    Bootstrap confidence intervals for F1 and ROC-AUC.
+
+    Returns
+    -------
+    dict[str, MetricCI]
+        Keys: ``f1`` and ``roc_auc``.
+    """
+    if len(y_true) != len(y_scores):
+        raise ValueError("y_true and y_scores must have the same length")
+    if not y_true:
+        empty = MetricCI(metric="f1", mean=0.0, lower=0.0, upper=0.0, confidence=confidence)
+        return {"f1": empty, "roc_auc": MetricCI(metric="roc_auc", mean=0.0, lower=0.0, upper=0.0, confidence=confidence)}
+
+    rng = random.Random(seed)
+    indices = list(range(len(y_true)))
+    f1_vals: list[float] = []
+    auc_vals: list[float] = []
+
+    for _ in range(n_bootstrap):
+        sample_idx = [rng.choice(indices) for _ in indices]
+        yt = [y_true[i] for i in sample_idx]
+        ys = [y_scores[i] for i in sample_idx]
+        yp = [1 if s >= threshold else 0 for s in ys]
+        report = compute_metrics(yt, yp, ys, threshold=threshold)
+        f1_vals.append(report.f1)
+        auc_vals.append(report.roc_auc or 0.0)
+
+    alpha = 1.0 - confidence
+    lo_i = max(0, int((alpha / 2.0) * n_bootstrap) - 1)
+    hi_i = min(n_bootstrap - 1, int((1.0 - alpha / 2.0) * n_bootstrap) - 1)
+
+    f1_sorted = sorted(f1_vals)
+    auc_sorted = sorted(auc_vals)
+
+    return {
+        "f1": MetricCI(
+            metric="f1",
+            mean=round(sum(f1_vals) / len(f1_vals), 4),
+            lower=round(f1_sorted[lo_i], 4),
+            upper=round(f1_sorted[hi_i], 4),
+            confidence=confidence,
+        ),
+        "roc_auc": MetricCI(
+            metric="roc_auc",
+            mean=round(sum(auc_vals) / len(auc_vals), 4),
+            lower=round(auc_sorted[lo_i], 4),
+            upper=round(auc_sorted[hi_i], 4),
+            confidence=confidence,
+        ),
+    }

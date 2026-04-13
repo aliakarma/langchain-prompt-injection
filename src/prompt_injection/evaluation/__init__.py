@@ -28,9 +28,12 @@ from prompt_injection.evaluation.metrics import (
     compute_metrics,
     MetricsReport,
     ConfusionMatrix,
+    MetricCI,
     ThresholdPoint,
     threshold_sweep,
     per_category_metrics,
+    compute_false_positive_rate,
+    bootstrap_confidence_intervals,
 )
 from prompt_injection.evaluation.benchmark import (
     BenchmarkRunner,
@@ -49,6 +52,7 @@ from prompt_injection.evaluation.report import ReportSerializer
 __all__ = [
     "SyntheticDataset", "DataRecord",
     "compute_metrics", "MetricsReport", "ConfusionMatrix",
+    "MetricCI", "compute_false_positive_rate", "bootstrap_confidence_intervals",
     "ThresholdPoint", "threshold_sweep", "per_category_metrics",
     "BenchmarkRunner", "BenchmarkResult", "ConfigResult",
     "CrossValidationSummary", "KeywordBaseline",

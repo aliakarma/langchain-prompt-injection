@@ -35,7 +35,10 @@ from sklearn.model_selection import StratifiedKFold
 from prompt_injection.detector import DetectionResult, HitRecord, InjectionDetector, LogisticRegressionScorer
 from prompt_injection.evaluation.dataset import SyntheticDataset, DataRecord
 from prompt_injection.evaluation.metrics import (
+    MetricCI,
     MetricsReport,
+    bootstrap_confidence_intervals,
+    compute_false_positive_rate,
     compute_metrics,
     per_category_metrics,
     threshold_sweep,
@@ -142,9 +145,13 @@ class BenchmarkResult:
     real_world_metrics : dict[str, MetricsReport]
     synthetic_baseline_metrics : dict[str, MetricsReport]
     real_world_baseline_metrics : dict[str, MetricsReport]
+    external_metrics : dict[str, MetricsReport]
     benign_fpr : dict[str, float]
     white_box_metrics : dict[str, MetricsReport]
     cross_validation : dict[str, CrossValidationSummary]
+    confidence_intervals : dict[str, dict[str, MetricCI]]
+    domain_shift : dict[str, dict[str, float]]
+    failure_cases : dict[str, list[dict[str, str | float | int]]]
     """
 
     config_a: ConfigResult
@@ -157,9 +164,13 @@ class BenchmarkResult:
     real_world_metrics: dict[str, MetricsReport] = field(default_factory=dict)
     synthetic_baseline_metrics: dict[str, MetricsReport] = field(default_factory=dict)
     real_world_baseline_metrics: dict[str, MetricsReport] = field(default_factory=dict)
+    external_metrics: dict[str, MetricsReport] = field(default_factory=dict)
     benign_fpr: dict[str, float] = field(default_factory=dict)
     white_box_metrics: dict[str, MetricsReport] = field(default_factory=dict)
     cross_validation: dict[str, CrossValidationSummary] = field(default_factory=dict)
+    confidence_intervals: dict[str, dict[str, MetricCI]] = field(default_factory=dict)
+    domain_shift: dict[str, dict[str, float]] = field(default_factory=dict)
+    failure_cases: dict[str, list[dict[str, str | float | int]]] = field(default_factory=dict)
 
     def configs(self) -> list[ConfigResult]:
         return [self.config_a, self.config_b, self.config_c]
@@ -275,6 +286,9 @@ class BenchmarkRunner:
         train_dataset: SyntheticDataset,
         real_world_test_dataset: SyntheticDataset,
         synthetic_test_dataset: SyntheticDataset,
+        *,
+        external_eval_dataset: SyntheticDataset | None = None,
+        benign_dataset: SyntheticDataset | None = None,
     ) -> BenchmarkResult:
         """
         Run the full three-configuration benchmark.
@@ -288,8 +302,14 @@ class BenchmarkRunner:
         synthetic_test_dataset : SyntheticDataset
             Held-out synthetic evaluation slice used only as an in-distribution
             upper bound.
+        external_eval_dataset : SyntheticDataset | None
+            Optional external benchmark split (e.g., HackAPrompt/BIPIA).
+        benign_dataset : SyntheticDataset | None
+            Optional benign-only corpus used for realistic FPR estimation.
         """
         self._ensure_disjoint(train_dataset, synthetic_test_dataset, real_world_test_dataset)
+        if external_eval_dataset is not None:
+            self._ensure_disjoint(train_dataset, external_eval_dataset, real_world_test_dataset)
 
         synthetic_records = synthetic_test_dataset.records()
         synthetic_texts = synthetic_test_dataset.texts()
@@ -297,6 +317,18 @@ class BenchmarkRunner:
         real_records = real_world_test_dataset.records()
         real_texts = real_world_test_dataset.texts()
         real_labels = real_world_test_dataset.labels()
+
+        external_records: list[DataRecord] = []
+        external_texts: list[str] = []
+        external_labels: list[int] = []
+        if external_eval_dataset is not None:
+            external_records = external_eval_dataset.records()
+            external_texts = external_eval_dataset.texts()
+            external_labels = external_eval_dataset.labels()
+
+        primary_records = self._merge_records(real_records + external_records)
+        primary_texts = [r.text for r in primary_records]
+        primary_labels = [r.label for r in primary_records]
 
         det_a, det_b, det_c = self._build_detectors(train_dataset)
 
@@ -316,21 +348,32 @@ class BenchmarkRunner:
             synthetic_per_category[name] = per_category
             synthetic_sweeps[name] = sweep
 
-        # ── Configuration A/B/C on real-world test ───────────────────────
+        # ── Configuration A/B/C on primary real-world test (real + external) ─
         real_metrics: dict[str, MetricsReport] = {}
         real_per_category: dict[str, dict[str, MetricsReport]] = {}
         real_sweeps: dict[str, list[ThresholdPoint]] = {}
+        external_metrics: dict[str, MetricsReport] = {}
         for name, det in [(self.CONFIG_NAMES["rules"], det_a), (self.CONFIG_NAMES["hybrid"], det_b), (self.CONFIG_NAMES["full"], det_c)]:
             metrics, per_category, sweep = self._evaluate_dataset(
                 det,
-                real_records,
-                real_texts,
-                real_labels,
+                primary_records,
+                primary_texts,
+                primary_labels,
                 config_name=name,
             )
             real_metrics[name] = metrics
             real_per_category[name] = per_category
             real_sweeps[name] = sweep
+
+            if external_records:
+                ext_metrics, _, _ = self._evaluate_dataset(
+                    det,
+                    external_records,
+                    external_texts,
+                    external_labels,
+                    config_name=name,
+                )
+                external_metrics[name] = ext_metrics
 
         # Latency profiling on the full evaluation corpus.
         latency_texts = self._length_stratified_texts(synthetic_texts + real_texts)
@@ -390,11 +433,14 @@ class BenchmarkRunner:
 
         baseline = KeywordBaseline()
         synthetic_baseline = self._evaluate_baseline(baseline, synthetic_texts, synthetic_labels, label="[Synthetic] Keyword baseline")
-        real_baseline = self._evaluate_baseline(baseline, real_texts, real_labels, label="[Real] Keyword baseline")
+        real_baseline = self._evaluate_baseline(baseline, primary_texts, primary_labels, label="[Real] Keyword baseline")
 
-        benign_real = real_world_test_dataset.filter_by_label(0)
+        benign_eval = benign_dataset if benign_dataset is not None else SyntheticDataset.__new__(SyntheticDataset)
+        if benign_dataset is None:
+            benign_eval._records = [r for r in primary_records if r.label == 0]
+
         benign_fpr = {
-            name: self._false_positive_rate(det, benign_real.texts())
+            name: self._false_positive_rate(det, benign_eval.texts())
             for name, det in [
                 (self.CONFIG_NAMES["rules"], det_a),
                 (self.CONFIG_NAMES["hybrid"], det_b),
@@ -414,6 +460,24 @@ class BenchmarkRunner:
 
         cv_summary = self._run_cross_validation(train_dataset)
 
+        confidence_intervals = self._compute_confidence_intervals(
+            {
+                self.CONFIG_NAMES["rules"]: det_a,
+                self.CONFIG_NAMES["hybrid"]: det_b,
+                self.CONFIG_NAMES["full"]: det_c,
+            },
+            primary_labels,
+            primary_texts,
+        )
+
+        domain_shift = self._domain_shift(
+            synthetic_metrics=synthetic_metrics,
+            real_metrics=real_metrics,
+            external_metrics=external_metrics,
+        )
+
+        failure_cases = self._collect_failure_cases(det_c, primary_records)
+
         return BenchmarkResult(
             config_a=cfg_a,
             config_b=cfg_b,
@@ -425,9 +489,13 @@ class BenchmarkRunner:
             real_world_metrics=real_metrics,
             synthetic_baseline_metrics={synthetic_baseline.config_name: synthetic_baseline},
             real_world_baseline_metrics={real_baseline.config_name: real_baseline},
+            external_metrics=external_metrics,
             benign_fpr=benign_fpr,
             white_box_metrics=white_box_metrics,
             cross_validation=cv_summary,
+            confidence_intervals=confidence_intervals,
+            domain_shift=domain_shift,
+            failure_cases=failure_cases,
         )
 
     # ------------------------------------------------------------------
@@ -511,7 +579,89 @@ class BenchmarkRunner:
         if not benign_texts:
             return 0.0
         y_pred, _ = self._predict(detector, benign_texts)
-        return round(sum(y_pred) / len(benign_texts), 4)
+        y_true = [0] * len(benign_texts)
+        return compute_false_positive_rate(y_true, y_pred)
+
+    def _compute_confidence_intervals(
+        self,
+        detectors: dict[str, Any],
+        labels: list[int],
+        texts: list[str],
+    ) -> dict[str, dict[str, MetricCI]]:
+        results: dict[str, dict[str, MetricCI]] = {}
+        for name, det in detectors.items():
+            _, scores = self._predict(det, texts)
+            results[name] = bootstrap_confidence_intervals(
+                labels,
+                scores,
+                threshold=self.threshold,
+                n_bootstrap=400,
+                confidence=0.95,
+                seed=42,
+            )
+        return results
+
+    def _domain_shift(
+        self,
+        *,
+        synthetic_metrics: dict[str, MetricsReport],
+        real_metrics: dict[str, MetricsReport],
+        external_metrics: dict[str, MetricsReport],
+    ) -> dict[str, dict[str, float]]:
+        gap: dict[str, dict[str, float]] = {}
+        for name, syn in synthetic_metrics.items():
+            primary = real_metrics.get(name)
+            ext = external_metrics.get(name)
+            if primary is None:
+                continue
+            gap[name] = {
+                "f1_drop_vs_synthetic": round(syn.f1 - primary.f1, 4),
+                "auc_drop_vs_synthetic": round((syn.roc_auc or 0.0) - (primary.roc_auc or 0.0), 4),
+                "f1_drop_primary_to_external": round(primary.f1 - ext.f1, 4) if ext is not None else 0.0,
+            }
+        return gap
+
+    def _merge_records(self, records: list[DataRecord]) -> list[DataRecord]:
+        seen: set[str] = set()
+        merged: list[DataRecord] = []
+        for record in records:
+            key = " ".join(record.text.lower().split())
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(record)
+        return merged
+
+    def _collect_failure_cases(self, detector: Any, records: list[DataRecord]) -> dict[str, list[dict[str, str | float | int]]]:
+        misses: list[dict[str, str | float | int]] = []
+        false_positives: list[dict[str, str | float | int]] = []
+        for record in records:
+            res = detector.scan(record.text, source_type=record.source_type)
+            pred = 1 if res.is_injection else 0
+            if record.label == 1 and pred == 0:
+                misses.append(
+                    {
+                        "id": record.id,
+                        "risk": res.risk_score,
+                        "category": record.attack_category or "unknown",
+                        "text": record.text[:220],
+                    }
+                )
+            if record.label == 0 and pred == 1:
+                false_positives.append(
+                    {
+                        "id": record.id,
+                        "risk": res.risk_score,
+                        "category": record.attack_category or "benign",
+                        "text": record.text[:220],
+                    }
+                )
+        misses.sort(key=lambda x: float(x["risk"]))
+        false_positives.sort(key=lambda x: float(x["risk"]), reverse=True)
+        return {
+            "missed_attacks": misses[:20],
+            "false_positives": false_positives[:20],
+        }
 
     def _run_cross_validation(self, dataset: SyntheticDataset) -> dict[str, CrossValidationSummary]:
         texts = dataset.texts()
