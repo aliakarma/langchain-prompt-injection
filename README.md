@@ -73,6 +73,107 @@ pip install -r requirements-dev.txt
 
 ---
 
+## Reviewer Quick Run (5 minutes)
+
+If you are reviewing this repository, use the steps below to run the full project in a predictable order.
+
+### Step 1: Create and activate a virtual environment
+
+macOS/Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+```
+
+### Step 2: Install dependencies
+
+Minimal runtime:
+
+```bash
+pip install -r requirements.txt
+```
+
+Full reviewer environment (recommended):
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+If your network is slow and `requirements-dev.txt` times out, install only test tooling:
+
+```bash
+pip install -r requirements.txt pytest pytest-cov
+```
+
+### Step 3: Run the 3 demo cases
+
+macOS/Linux:
+
+```bash
+export PYTHONPATH=src
+python demo/demo_block.py
+python demo/demo_annotate.py
+python demo/demo_rag_pipeline.py
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH = "src"
+python demo/demo_block.py
+python demo/demo_annotate.py
+python demo/demo_rag_pipeline.py
+```
+
+### Step 4: Run tests
+
+macOS/Linux:
+
+```bash
+export PYTHONPATH=src
+python -m pytest tests -q --tb=short
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -m pytest tests -q --tb=short
+```
+
+### Step 5: Run the benchmark (optional but useful for review)
+
+macOS/Linux:
+
+```bash
+export PYTHONPATH=src
+make benchmark
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH = "src"
+python -c "import sys; sys.path.insert(0,'src'); from prompt_injection.evaluation.dataset import SyntheticDataset; from prompt_injection.evaluation.benchmark import BenchmarkRunner; from prompt_injection.evaluation.report import ReportSerializer; import pathlib; ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); tr, te = ds.train_test_split(0.20, seed=42); rw = SyntheticDataset(); [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; result = BenchmarkRunner(n_latency_runs=30).run(tr, te, rw); s = ReportSerializer(result); s.print_summary(); pathlib.Path('reports').mkdir(exist_ok=True); s.to_json('reports/benchmark.json'); s.to_csv('reports/benchmark.csv'); s.category_csv('reports/category_breakdown.csv')"
+```
+
+Expected benchmark artifacts:
+- `reports/benchmark.json`
+- `reports/benchmark.csv`
+- `reports/category_breakdown.csv`
+
+---
+
 ## Detection Configurations
 
 Three configurations with increasing sophistication and latency:
