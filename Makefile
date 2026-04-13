@@ -82,7 +82,7 @@ ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); \
 tr, te = ds.train_test_split(0.20, seed=42); \
 rw = SyntheticDataset(); \
 [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; \
-result = BenchmarkRunner(n_latency_runs=30).run(tr, te, rw); \
+result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, te); \
 s = ReportSerializer(result); \
 s.print_summary(); \
 pathlib.Path('reports').mkdir(exist_ok=True); \

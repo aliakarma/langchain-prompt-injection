@@ -17,8 +17,15 @@ from prompt_injection.evaluation.report import ReportSerializer
 @pytest.fixture(scope="module")
 def report_serializer():
     ds = SyntheticDataset(n_injections=60, n_benign=60, seed=42).generate()
-    train_ds, test_ds = ds.train_test_split(test_size=0.20, seed=42)
-    result = BenchmarkRunner(n_latency_runs=3, sweep_thresholds=False).run(train_ds, test_ds)
+    train_ds, synthetic_test_ds = ds.train_test_split(test_size=0.20, seed=42)
+    rw = SyntheticDataset()
+    import pathlib
+    base = pathlib.Path(__file__).parents[3] / "data" / "real"
+    if not base.exists():
+        pytest.skip("data/real not found")
+    rw.load_from_path(base / "injections_real.jsonl")
+    rw.load_from_path(base / "benign_real.jsonl")
+    result = BenchmarkRunner(n_latency_runs=3, sweep_thresholds=False).run(train_ds, rw, synthetic_test_ds)
     return ReportSerializer(result)
 
 
@@ -30,7 +37,7 @@ class TestReportSerializerJSON:
 
     def test_json_top_level_keys(self, report_serializer):
         parsed = json.loads(report_serializer.to_json_str())
-        assert set(parsed.keys()) == {"summary", "configurations", "real_world_metrics"}
+        assert {"summary", "configurations", "real_world_metrics", "synthetic_metrics"}.issubset(parsed.keys())
 
     def test_json_has_three_configurations(self, report_serializer):
         parsed = json.loads(report_serializer.to_json_str())

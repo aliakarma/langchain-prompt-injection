@@ -290,21 +290,24 @@ Or from Python:
 from prompt_injection.evaluation import SyntheticDataset, BenchmarkRunner, ReportSerializer
 
 ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate()
-train_ds, test_ds = ds.train_test_split(test_size=0.20)
+train_ds, synthetic_test_ds = ds.train_test_split(test_size=0.20, seed=42)
 
-result = BenchmarkRunner().run(train_ds, test_ds)
+real_world = SyntheticDataset()
+real_world.load_from_path("data/real/injections_real.jsonl")
+real_world.load_from_path("data/real/benign_real.jsonl")
+
+result = BenchmarkRunner().run(train_ds, real_world, synthetic_test_ds)
 ReportSerializer(result).print_summary()
 ```
 
-**Sample output (actual results vary by run):**
+The benchmark is intentionally split into separate evaluation sets:
 
-```
-Configuration              P        R       F1      Acc     AUC    Latency
---------------------------------------------------------------------
-A: Regex only          1.0000   0.7250   0.8406  0.9100    N/A     0.08 ms
-B: Regex + Scoring     1.0000   0.7000   0.8235  0.9000   0.89     0.12 ms
-C: + Classifier        1.0000   0.7250   0.8406  0.9100   1.00     0.73 ms
-```
+- Synthetic held-out data gives an in-distribution upper bound.
+- Real-world data is the primary result and is never used for training.
+- Cross-validation is run only on the synthetic training split.
+- Additional checks include benign-only false-positive rate, white-box evasion cases, and full-corpus latency profiling.
+
+Use the real-world table as the reportable primary metric set. Synthetic numbers are useful for debugging and sanity checks, but they should not be presented as the main result.
 
 ### Metrics API
 
@@ -329,7 +332,7 @@ from prompt_injection.detector import InjectionDetector
 profiler = PerformanceProfiler()
 report = profiler.profile(InjectionDetector(mode="hybrid"), texts, n_runs=50)
 print(report.summary())
-# Mean: 0.184 ms   P95: 0.146 ms   Throughput: 5442 req/s
+# Mean / P50 / P95 / P99 are reported from the full evaluation corpus
 ```
 
 ---
@@ -370,7 +373,7 @@ make test-int       # Integration tests only
 make test-fast      # Fast run, no coverage
 ```
 
-**235 tests, 0 failures** on Python 3.10–3.12.
+Run `pytest -q` locally to confirm the current test count and ensure the suite passes in your environment.
 
 ---
 
@@ -399,7 +402,7 @@ langchain-prompt-injection/
 │   └── README.md            # Dataset schema and extension guide
 │
 ├── notebooks/               # 5 structured Jupyter notebooks
-├── tests/                   # 235 unit + integration tests
+├── tests/                   # Unit + integration test suite
 ├── demo/                    # 3 runnable demo scripts
 ├── THREAT_MODEL.md          # Formal adversary model and trust boundaries
 ├── pyproject.toml

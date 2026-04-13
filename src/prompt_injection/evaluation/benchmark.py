@@ -402,7 +402,7 @@ class BenchmarkRunner:
             ]
         }
 
-        white_box_dataset = self._build_white_box_dataset(seed=train_dataset.seed)
+        white_box_dataset = self._build_white_box_dataset(seed=getattr(train_dataset, "seed", 42))
         white_box_metrics = {
             name: self._evaluate_baseline_or_detector(det, white_box_dataset, config_name=name)
             for name, det in [
@@ -519,7 +519,11 @@ class BenchmarkRunner:
         if len(set(labels)) < 2:
             return {}
 
-        splitter = StratifiedKFold(n_splits=self.cv_folds, shuffle=True, random_state=dataset.seed)
+        splitter = StratifiedKFold(
+            n_splits=self.cv_folds,
+            shuffle=True,
+            random_state=getattr(dataset, "seed", 42),
+        )
         fold_stats: dict[str, list[MetricsReport]] = {name: [] for name in self.CONFIG_NAMES.values()}
 
         for train_idx, test_idx in splitter.split(texts, labels):

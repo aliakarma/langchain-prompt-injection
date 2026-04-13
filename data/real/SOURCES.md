@@ -7,7 +7,7 @@ prompt-injection examples drawn from publicly documented sources.
 
 | ID Range | Source | Notes |
 |---|---|---|
-| real-inj-001 to real-inj-005 | [Perez & Ribeiro (2022) — "Prompt Injection Attacks and Defenses in LLM-Integrated Applications"](https://arxiv.org/abs/2306.05499) | Adapted from published examples |
+| real-inj-001 to real-inj-005 | [Liu et al. (2023) — "Prompt Injection attack against LLM-integrated Applications"](https://arxiv.org/abs/2306.05499) | Adapted from published examples |
 | real-inj-006 to real-inj-010 | [HackAPrompt competition dataset (Schulhoff et al., NeurIPS 2023)](https://github.com/DavyJ0nes/hackaprompt) | Publicly released competition dataset |
 | real-inj-011 to real-inj-015 | [BIPIA benchmark (Yi et al., 2023)](https://arxiv.org/abs/2312.14197) | Indirect injection examples from benchmark |
 | real-inj-016 to real-inj-020 | Public red-teaming disclosures (various) | Documented in public blog posts and security advisories |
