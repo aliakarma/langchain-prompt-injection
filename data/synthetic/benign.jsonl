@@ -1,0 +1,250 @@
+{"id": "syn-ben-0030", "text": "Explain the SOLID principles in software engineering with examples.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0160", "text": "HELP ME WRITE A UNIT TEST FOR THIS AUTHENTICATION FUNCTION.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0234", "text": "THE DATASET CONTAINS 15,000 LABELLED IMAGES ACROSS 20 CATEGORIES.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0005", "text": "How do I configure a nginx reverse proxy for a Node.js application?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0116", "text": "EXPLAIN THE SOLID PRINCIPLES IN SOFTWARE ENGINEERING WITH EXAMPLES.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0216", "text": "section 4.2: the architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0145", "text": "Please section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0106", "text": "Hey, explain the concept of gradient descent in machine learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0166", "text": "file read successfully: 2,847 lines of python code across 23 modules.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0094", "text": "Section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0161", "text": "the conference will take place on march 15-17, 2026, in san francisco, ca.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0208", "text": "WHAT ARE THE PROS AND CONS OF MICROSERVICES VS MONOLITHIC ARCHITECTURE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0058", "text": "Database query returned 1,234 rows in 0.032 seconds.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0037", "text": "The audit found that all financial statements comply with IFRS standards.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0040", "text": "File read successfully: 2,847 lines of Python code across 23 modules.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0211", "text": "WHAT IS THE CAPITAL OF FRANCE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0012", "text": "The product documentation states that the API rate limit is 100 requests per minute.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0008", "text": "What are the best practices for securing a REST API?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0038", "text": "What is the difference between a mutex and a semaphore?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0225", "text": "Note: help me write a unit test for this authentication function.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0177", "text": "How do I implement pagination in a REST API using cursor-based pagination?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0143", "text": "the dataset contains 15,000 labelled images across 20 categories.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0149", "text": "how does the attention mechanism work in transformer models?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0018", "text": "Can you review this essay and suggest improvements to the structure?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0220", "text": "Please the company was founded in 2010 and currently employs over 5,000 people worldwide.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0043", "text": "Hey, the legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0202", "text": "Actually, weather data: Temperature 22\u00b0C, Humidity 65%, Wind speed 12 km/h.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0129", "text": "Please what is the difference between authentication and authorization?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0246", "text": "what is the difference between a mutex and a semaphore?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0009", "text": "Weather data: Temperature 22\u00b0C, Humidity 65%, Wind speed 12 km/h.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0242", "text": "The legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0192", "text": "EXPLAIN THE DIFFERENCE BETWEEN SUPERVISED AND UNSUPERVISED LEARNING.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0180", "text": "Please can you help me create a Gantt chart for my software project?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0068", "text": "the quarterly earnings report shows a 12% increase in revenue year-over-year.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0169", "text": "SECTION 4.2: THE ARCHITECTURE USES A TRANSFORMER ENCODER WITH 12 ATTENTION HEADS.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0151", "text": "WHAT ARE THE PROS AND CONS OF MICROSERVICES VS MONOLITHIC ARCHITECTURE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0243", "text": "explain the solid principles in software engineering with examples.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0126", "text": "CAN YOU HELP ME CREATE A GANTT CHART FOR MY SOFTWARE PROJECT?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0078", "text": "Actually, search results: Found 42 documents matching your query about climate change.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0125", "text": "Please please translate this paragraph from English to Spanish.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0181", "text": "DATABASE QUERY RETURNED 1,234 ROWS IN 0.032 SECONDS.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0113", "text": "THE PRODUCT DOCUMENTATION STATES THAT THE API RATE LIMIT IS 100 REQUESTS PER MINUTE.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0011", "text": "Explain the difference between supervised and unsupervised learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0248", "text": "Please the company was founded in 2010 and currently employs over 5,000 people worldwide.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0000", "text": "Can you help me write a Python function to sort a list of dictionaries?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0121", "text": "THE AUDIT FOUND THAT ALL FINANCIAL STATEMENTS COMPLY WITH IFRS STANDARDS.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0081", "text": "what are the best practices for securing a rest api?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0033", "text": "Write a regex pattern to validate an email address in Python.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0065", "text": "Please translate this paragraph from English to Spanish.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0108", "text": "EXPLAIN THE SOLID PRINCIPLES IN SOFTWARE ENGINEERING WITH EXAMPLES.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0153", "text": "how do i implement pagination in a rest api using cursor-based pagination?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0136", "text": "Note: the audit found that all financial statements comply with IFRS standards.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0013", "text": "Write a SQL query to find the top 10 customers by total purchase amount.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0036", "text": "Can you help me create a Gantt chart for my software project?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0017", "text": "Section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0134", "text": "Hey, explain the difference between supervised and unsupervised learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0178", "text": "SEARCH RESULTS: FOUND 42 DOCUMENTS MATCHING YOUR QUERY ABOUT CLIMATE CHANGE.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0156", "text": "Note: how does the attention mechanism work in transformer models?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0045", "text": "The product documentation states that the API rate limit is 100 requests per minute.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0207", "text": "Section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0120", "text": "Please can you help me debug this JavaScript promise chain?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0034", "text": "The conference will take place on March 15-17, 2026, in San Francisco, CA.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0233", "text": "Can you review this essay and suggest improvements to the structure?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0144", "text": "Note: what vitamins are found in citrus fruits and what are their health benefits?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0059", "text": "API CALL SUCCESSFUL: 200 OK. RESPONSE TIME: 145MS. TOKENS USED: 512.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0123", "text": "how do i implement pagination in a rest api using cursor-based pagination?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0190", "text": "HOW DO I SET UP A VIRTUAL ENVIRONMENT IN PYTHON 3.10?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0186", "text": "What are the main differences between TCP and UDP protocols?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0171", "text": "THE DATASET CONTAINS 15,000 LABELLED IMAGES ACROSS 20 CATEGORIES.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0247", "text": "Hey, search results: Found 42 documents matching your query about climate change.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0199", "text": "Actually, what is the time complexity of merge sort?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0124", "text": "search results: found 42 documents matching your query about climate change.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0057", "text": "WHAT IS THE CAPITAL OF FRANCE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0232", "text": "Actually, write a SQL query to find the top 10 customers by total purchase amount.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0173", "text": "Explain the SOLID principles in software engineering with examples.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0249", "text": "Hey, can you review this essay and suggest improvements to the structure?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0080", "text": "THE CONFERENCE WILL TAKE PLACE ON MARCH 15-17, 2026, IN SAN FRANCISCO, CA.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0212", "text": "WHAT IS THE TIME COMPLEXITY OF MERGE SORT?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0090", "text": "EXPLAIN THE SOLID PRINCIPLES IN SOFTWARE ENGINEERING WITH EXAMPLES.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0167", "text": "WHAT ARE THE MAIN DIFFERENCES BETWEEN TCP AND UDP PROTOCOLS?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0041", "text": "Note: search results: Found 42 documents matching your query about climate change.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0047", "text": "Hey, aPI call successful: 200 OK. Response time: 145ms. Tokens used: 512.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0049", "text": "Actually, what are the main differences between TCP and UDP protocols?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0158", "text": "how do i set up a virtual environment in python 3.10?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0097", "text": "Can you help me debug this JavaScript promise chain?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0114", "text": "api call successful: 200 ok. response time: 145ms. tokens used: 512.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0130", "text": "The legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0056", "text": "the product documentation states that the api rate limit is 100 requests per minute.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0086", "text": "THE LEGAL TEAM REVIEWED THE CONTRACT AND FOUND NO SIGNIFICANT ISSUES WITH THE LIABILITY CLAUSES.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0239", "text": "According to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0215", "text": "Write a regex pattern to validate an email address in Python.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0175", "text": "Hey, the quarterly earnings report shows a 12% increase in revenue year-over-year.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0148", "text": "The legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0209", "text": "WHAT IS THE DIFFERENCE BETWEEN A MUTEX AND A SEMAPHORE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0112", "text": "what is the capital of france?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0109", "text": "THE CONFERENCE WILL TAKE PLACE ON MARCH 15-17, 2026, IN SAN FRANCISCO, CA.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0010", "text": "Can you help me debug this JavaScript promise chain?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0127", "text": "What vitamins are found in citrus fruits and what are their health benefits?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0240", "text": "according to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0214", "text": "Explain the difference between supervised and unsupervised learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0020", "text": "Help me write a unit test for this authentication function.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0154", "text": "Hey, what are the main differences between TCP and UDP protocols?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0179", "text": "weather data: temperature 22\u00b0c, humidity 65%, wind speed 12 km/h.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0236", "text": "Please can you help me debug this JavaScript promise chain?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0098", "text": "WHAT ARE THE BEST PRACTICES FOR SECURING A REST API?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0206", "text": "Hey, email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0014", "text": "What is the time complexity of merge sort?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0164", "text": "please translate this paragraph from english to spanish.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0241", "text": "Note: the dataset contains 15,000 labelled images across 20 categories.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0072", "text": "API call successful: 200 OK. Response time: 145ms. Tokens used: 512.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0101", "text": "What are the best practices for securing a REST API?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0051", "text": "What are the pros and cons of microservices vs monolithic architecture?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0093", "text": "the dataset contains 15,000 labelled images across 20 categories.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0137", "text": "DATABASE QUERY RETURNED 1,234 ROWS IN 0.032 SECONDS.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0053", "text": "CAN YOU HELP ME DEBUG THIS JAVASCRIPT PROMISE CHAIN?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0055", "text": "Actually, database query returned 1,234 rows in 0.032 seconds.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0183", "text": "what is the difference between a mutex and a semaphore?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0157", "text": "Note: email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0015", "text": "Database query returned 1,234 rows in 0.032 seconds.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0142", "text": "Actually, the dataset contains 15,000 labelled images across 20 categories.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0084", "text": "Search results: Found 42 documents matching your query about climate change.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0022", "text": "What vitamins are found in citrus fruits and what are their health benefits?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0221", "text": "Hey, can you help me debug this JavaScript promise chain?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0064", "text": "WEATHER DATA: TEMPERATURE 22\u00b0C, HUMIDITY 65%, WIND SPEED 12 KM/H.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0001", "text": "What is the capital of France?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0237", "text": "How does the attention mechanism work in transformer models?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0222", "text": "Hey, the dataset contains 15,000 labelled images across 20 categories.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0172", "text": "Hey, can you help me write a Python function to sort a list of dictionaries?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0031", "text": "The dataset contains 15,000 labelled images across 20 categories.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0168", "text": "the conference will take place on march 15-17, 2026, in san francisco, ca.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0176", "text": "ACCORDING TO THE STUDY, PARTICIPANTS WHO EXERCISED REGULARLY SHOWED IMPROVED COGNITIVE FUNCTION.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0016", "text": "How do I set up a virtual environment in Python 3.10?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0002", "text": "Summarize the main findings of this research paper for me.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0189", "text": "write a sql query to find the top 10 customers by total purchase amount.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0194", "text": "The legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0102", "text": "EXPLAIN THE DIFFERENCE BETWEEN SUPERVISED AND UNSUPERVISED LEARNING.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0079", "text": "Note: section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0229", "text": "THE LEGAL TEAM REVIEWED THE CONTRACT AND FOUND NO SIGNIFICANT ISSUES WITH THE LIABILITY CLAUSES.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0115", "text": "database query returned 1,234 rows in 0.032 seconds.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0024", "text": "Explain the concept of gradient descent in machine learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0228", "text": "The conference will take place on March 15-17, 2026, in San Francisco, CA.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0203", "text": "SEARCH RESULTS: FOUND 42 DOCUMENTS MATCHING YOUR QUERY ABOUT CLIMATE CHANGE.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0088", "text": "EXPLAIN THE CONCEPT OF GRADIENT DESCENT IN MACHINE LEARNING.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0133", "text": "Weather data: Temperature 22\u00b0C, Humidity 65%, Wind speed 12 km/h.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0054", "text": "Please can you review this essay and suggest improvements to the structure?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0035", "text": "How does the attention mechanism work in transformer models?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0184", "text": "Write a regex pattern to validate an email address in Python.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0191", "text": "can you help me debug this javascript promise chain?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0187", "text": "WHAT ARE THE MAIN DIFFERENCES BETWEEN TCP AND UDP PROTOCOLS?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0061", "text": "can you help me create a gantt chart for my software project?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0006", "text": "Please translate this paragraph from English to Spanish.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0141", "text": "THE COMPANY WAS FOUNDED IN 2010 AND CURRENTLY EMPLOYS OVER 5,000 PEOPLE WORLDWIDE.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0026", "text": "The legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0063", "text": "how do i implement pagination in a rest api using cursor-based pagination?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0135", "text": "Email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0196", "text": "CAN YOU REVIEW THIS ESSAY AND SUGGEST IMPROVEMENTS TO THE STRUCTURE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0162", "text": "the product documentation states that the api rate limit is 100 requests per minute.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0046", "text": "explain the concept of gradient descent in machine learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0201", "text": "the conference will take place on march 15-17, 2026, in san francisco, ca.", "label": 0, "attack_category": null, "source_type": "web", "severity": null}
+{"id": "syn-ben-0071", "text": "Hey, write a regex pattern to validate an email address in Python.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0185", "text": "What are the pros and cons of microservices vs monolithic architecture?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0223", "text": "HOW DOES THE ATTENTION MECHANISM WORK IN TRANSFORMER MODELS?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0075", "text": "Actually, what are the pros and cons of microservices vs monolithic architecture?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0213", "text": "SECTION 4.2: THE ARCHITECTURE USES A TRANSFORMER ENCODER WITH 12 ATTENTION HEADS.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0128", "text": "FILE READ SUCCESSFULLY: 2,847 LINES OF PYTHON CODE ACROSS 23 MODULES.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0060", "text": "Email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0159", "text": "according to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0118", "text": "Note: email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0087", "text": "Write a SQL query to find the top 10 customers by total purchase amount.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0092", "text": "the legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0044", "text": "can you review this essay and suggest improvements to the structure?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0146", "text": "write a regex pattern to validate an email address in python.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0231", "text": "WHAT ARE THE PROS AND CONS OF MICROSERVICES VS MONOLITHIC ARCHITECTURE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0163", "text": "Note: explain the SOLID principles in software engineering with examples.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0245", "text": "explain the concept of gradient descent in machine learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0230", "text": "Hey, the product documentation states that the API rate limit is 100 requests per minute.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0198", "text": "EMAIL SENT SUCCESSFULLY TO 3 RECIPIENTS. MESSAGE ID: MSG_A1B2C3D4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0103", "text": "How do I set up a virtual environment in Python 3.10?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0077", "text": "Hey, database query returned 1,234 rows in 0.032 seconds.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0152", "text": "Actually, how do I configure a nginx reverse proxy for a Node.js application?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0050", "text": "Hey, can you help me plan a vegetarian meal prep for the week?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0244", "text": "email sent successfully to 3 recipients. message id: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0029", "text": "Email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0096", "text": "Hey, explain the concept of gradient descent in machine learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0219", "text": "Hey, explain the SOLID principles in software engineering with examples.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0091", "text": "Hey, what vitamins are found in citrus fruits and what are their health benefits?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0122", "text": "What are the main differences between TCP and UDP protocols?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0076", "text": "Section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0205", "text": "WHAT ARE THE PROS AND CONS OF MICROSERVICES VS MONOLITHIC ARCHITECTURE?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0048", "text": "HOW DOES THE ATTENTION MECHANISM WORK IN TRANSFORMER MODELS?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0004", "text": "Search results: Found 42 documents matching your query about climate change.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0174", "text": "the company was founded in 2010 and currently employs over 5,000 people worldwide.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0067", "text": "Write a regex pattern to validate an email address in Python.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0218", "text": "THE DATASET CONTAINS 15,000 LABELLED IMAGES ACROSS 20 CATEGORIES.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0062", "text": "Explain the concept of gradient descent in machine learning.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0099", "text": "HOW DO I IMPLEMENT PAGINATION IN A REST API USING CURSOR-BASED PAGINATION?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0039", "text": "API call successful: 200 OK. Response time: 145ms. Tokens used: 512.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0226", "text": "According to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0021", "text": "The company was founded in 2010 and currently employs over 5,000 people worldwide.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0105", "text": "Note: email sent successfully to 3 recipients. Message ID: msg_a1b2c3d4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0200", "text": "CAN YOU HELP ME PLAN A VEGETARIAN MEAL PREP FOR THE WEEK?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0110", "text": "what vitamins are found in citrus fruits and what are their health benefits?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0074", "text": "Can you help me debug this JavaScript promise chain?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0139", "text": "Database query returned 1,234 rows in 0.032 seconds.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0132", "text": "File read successfully: 2,847 lines of Python code across 23 modules.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0100", "text": "How do I configure a nginx reverse proxy for a Node.js application?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0073", "text": "How does the attention mechanism work in transformer models?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0066", "text": "what is the time complexity of merge sort?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0210", "text": "Note: can you help me plan a vegetarian meal prep for the week?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0027", "text": "Can you help me plan a vegetarian meal prep for the week?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0138", "text": "Section 4.2: The architecture uses a transformer encoder with 12 attention heads.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0117", "text": "can you help me create a gantt chart for my software project?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0070", "text": "What are the best practices for securing a REST API?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0224", "text": "EMAIL SENT SUCCESSFULLY TO 3 RECIPIENTS. MESSAGE ID: MSG_A1B2C3D4.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0023", "text": "File read successfully: 2,847 lines of Python code across 23 modules.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0095", "text": "THE DATASET CONTAINS 15,000 LABELLED IMAGES ACROSS 20 CATEGORIES.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0082", "text": "What is the time complexity of merge sort?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0104", "text": "help me write a unit test for this authentication function.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0069", "text": "According to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0150", "text": "Explain the SOLID principles in software engineering with examples.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0085", "text": "Hey, the legal team reviewed the contract and found no significant issues with the liability clauses.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0119", "text": "CAN YOU HELP ME DEBUG THIS JAVASCRIPT PROMISE CHAIN?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0238", "text": "how do i configure a nginx reverse proxy for a node.js application?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0019", "text": "What are the main differences between TCP and UDP protocols?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0204", "text": "Note: can you help me debug this JavaScript promise chain?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0182", "text": "How does the attention mechanism work in transformer models?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0197", "text": "Note: what is the time complexity of merge sort?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0235", "text": "what is the capital of france?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0052", "text": "Write a SQL query to find the top 10 customers by total purchase amount.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0007", "text": "According to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0003", "text": "The quarterly earnings report shows a 12% increase in revenue year-over-year.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0083", "text": "weather data: temperature 22\u00b0c, humidity 65%, wind speed 12 km/h.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0170", "text": "Actually, the quarterly earnings report shows a 12% increase in revenue year-over-year.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0155", "text": "Hey, how does the attention mechanism work in transformer models?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0089", "text": "Can you help me create a Gantt chart for my software project?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0165", "text": "can you review this essay and suggest improvements to the structure?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0217", "text": "The audit found that all financial statements comply with IFRS standards.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0111", "text": "SEARCH RESULTS: FOUND 42 DOCUMENTS MATCHING YOUR QUERY ABOUT CLIMATE CHANGE.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0131", "text": "Please translate this paragraph from English to Spanish.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0147", "text": "how do i configure a nginx reverse proxy for a node.js application?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0188", "text": "API CALL SUCCESSFUL: 200 OK. RESPONSE TIME: 145MS. TOKENS USED: 512.", "label": 0, "attack_category": null, "source_type": "tool", "severity": null}
+{"id": "syn-ben-0042", "text": "Note: according to the study, participants who exercised regularly showed improved cognitive function.", "label": 0, "attack_category": null, "source_type": "rag", "severity": null}
+{"id": "syn-ben-0107", "text": "HOW DO I SET UP A VIRTUAL ENVIRONMENT IN PYTHON 3.10?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0195", "text": "What is the difference between a mutex and a semaphore?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0227", "text": "WHAT IS THE DIFFERENCE BETWEEN AUTHENTICATION AND AUTHORIZATION?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0028", "text": "What are the pros and cons of microservices vs monolithic architecture?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0140", "text": "Can you help me create a Gantt chart for my software project?.", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0032", "text": "What is the difference between authentication and authorization?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0025", "text": "How do I implement pagination in a REST API using cursor-based pagination?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}
+{"id": "syn-ben-0193", "text": "CAN YOU HELP ME DEBUG THIS JAVASCRIPT PROMISE CHAIN?", "label": 0, "attack_category": null, "source_type": "user", "severity": null}

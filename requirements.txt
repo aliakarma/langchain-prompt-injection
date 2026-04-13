@@ -1,0 +1,12 @@
+# Runtime dependencies
+# Install with: pip install -r requirements.txt
+#
+# LangChain and OpenAI provider are optional — the middleware degrades
+# gracefully when they are not installed (inspect_messages / inspect_text
+# work without LangChain; the four hooks require it).
+#
+# To install with LangChain support:
+#   pip install -r requirements.txt langchain langchain-openai
+
+scikit-learn>=1.3,<2.0
+numpy>=1.24,<3.0
