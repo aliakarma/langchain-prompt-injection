@@ -31,6 +31,8 @@ Usage
 from __future__ import annotations
 
 import json
+import csv
+import hashlib
 import random
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -433,6 +435,54 @@ class SyntheticDataset:
         self._records.extend(loaded)
         return self
 
+    def load_external_dataset(
+        self,
+        path: str | Path,
+        *,
+        train_texts: set[str] | None = None,
+    ) -> "SyntheticDataset":
+        """
+        Load an external dataset (HackAPrompt/BIPIA/JSONL/CSV/JSON) and
+        normalize records to the canonical schema.
+
+        Canonical schema fields:
+            {id, text, label, attack_category, source_type, severity}
+
+        Parameters
+        ----------
+        path : str | Path
+            Path to a JSONL, JSON, or CSV file.
+        train_texts : set[str] | None
+            Optional normalized training texts used to prevent train/eval overlap.
+        """
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(f"External dataset file not found: {p}")
+
+        rows = self._read_external_rows(p)
+        normalized = [self._normalize_external_row(row, i, p.stem) for i, row in enumerate(rows)]
+        self._records.extend(normalized)
+        self.deduplicate_records(train_texts=train_texts)
+        return self
+
+    def deduplicate_records(self, *, train_texts: set[str] | None = None) -> "SyntheticDataset":
+        """Drop duplicate texts and optional train-text overlaps in-place."""
+        seen: set[str] = set()
+        train_norm = {self._norm_text_key(t) for t in (train_texts or set())}
+        deduped: list[DataRecord] = []
+
+        for rec in self._records:
+            norm_key = self._norm_text_key(rec.text)
+            if norm_key in train_norm:
+                continue
+            if norm_key in seen:
+                continue
+            seen.add(norm_key)
+            deduped.append(rec)
+
+        self._records = deduped
+        return self
+
     def save_to_path(self, path: str | Path) -> None:
         """Persist all records as JSONL."""
         p = Path(path)
@@ -550,3 +600,92 @@ class SyntheticDataset:
         ds = SyntheticDataset.__new__(SyntheticDataset)
         ds._records = [r for r in self._records if r.attack_category == category]
         return ds
+
+    # ------------------------------------------------------------------
+    # External dataset helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _norm_text_key(text: str) -> str:
+        return " ".join(text.lower().split())
+
+    def _read_external_rows(self, path: Path) -> list[dict]:
+        suffix = path.suffix.lower()
+        if suffix == ".jsonl":
+            rows: list[dict] = []
+            with path.open("r", encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    rows.append(json.loads(line))
+            return rows
+
+        if suffix == ".json":
+            with path.open("r", encoding="utf-8") as fh:
+                payload = json.load(fh)
+            if isinstance(payload, list):
+                return [row for row in payload if isinstance(row, dict)]
+            if isinstance(payload, dict):
+                for key in ("data", "records", "examples", "rows"):
+                    if isinstance(payload.get(key), list):
+                        return [row for row in payload[key] if isinstance(row, dict)]
+            raise ValueError(f"Unsupported JSON structure in {path}")
+
+        if suffix == ".csv":
+            with path.open("r", encoding="utf-8", newline="") as fh:
+                return list(csv.DictReader(fh))
+
+        raise ValueError(f"Unsupported external dataset format: {suffix}")
+
+    def _normalize_external_row(self, raw: dict, index: int, dataset_name: str) -> DataRecord:
+        text = self._pick_first(raw, ["text", "prompt", "instruction", "content", "input", "query", "message"])
+        if not text or not isinstance(text, str):
+            raise ValueError(f"External dataset row {index} is missing text-like field")
+
+        label_raw = self._pick_first(raw, ["label", "is_injection", "attack", "jailbreak", "target"])
+        label = self._coerce_label(label_raw)
+
+        attack_category = self._pick_first(raw, ["attack_category", "category", "attack_type", "type"])
+        if label == 0:
+            attack_category = None
+        elif not attack_category:
+            attack_category = "unknown_external"
+
+        source_type = self._pick_first(raw, ["source_type", "source", "channel", "origin"]) or "user"
+        severity = self._pick_first(raw, ["severity", "risk", "risk_level"]) or ("medium" if label == 1 else None)
+
+        ext_id = self._pick_first(raw, ["id", "sample_id", "uid", "uuid"])
+        if not ext_id:
+            digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:12]
+            ext_id = f"{dataset_name}-{index:06d}-{digest}"
+
+        return DataRecord(
+            id=str(ext_id),
+            text=text.strip(),
+            label=label,
+            attack_category=str(attack_category) if attack_category is not None else None,
+            source_type=str(source_type),
+            severity=str(severity) if severity is not None else None,
+        )
+
+    @staticmethod
+    def _pick_first(raw: dict, keys: list[str]) -> str | int | float | bool | None:
+        for key in keys:
+            if key in raw and raw[key] not in (None, ""):
+                return raw[key]
+        return None
+
+    @staticmethod
+    def _coerce_label(value: str | int | float | bool | None) -> int:
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, (int, float)):
+            return 1 if int(value) > 0 else 0
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {"1", "true", "attack", "injection", "jailbreak", "malicious", "yes"}:
+                return 1
+            if lowered in {"0", "false", "benign", "safe", "normal", "no"}:
+                return 0
+        return 0
