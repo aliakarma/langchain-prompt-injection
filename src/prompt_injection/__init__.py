@@ -52,7 +52,7 @@ from prompt_injection.exceptions import (
     ClassifierNotAvailableError,
 )
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __author__ = "Ali Akarma"
 __all__ = [
     # Core
