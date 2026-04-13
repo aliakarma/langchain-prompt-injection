@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 title: "Your Project Title"
 version: "1.0.0"
 doi: 10.5281/zenodo.XXXXXXX
-date-released: 2026-04-12
+date-released: 2026-1-1
 
 authors:
   - family-names: "Akarma"
