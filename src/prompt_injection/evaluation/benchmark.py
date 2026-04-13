@@ -27,9 +27,11 @@ Usage
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from prompt_injection.detector import InjectionDetector, LogisticRegressionScorer
+from sklearn.model_selection import StratifiedKFold
+
+from prompt_injection.detector import DetectionResult, HitRecord, InjectionDetector, LogisticRegressionScorer
 from prompt_injection.evaluation.dataset import SyntheticDataset, DataRecord
 from prompt_injection.evaluation.metrics import (
     MetricsReport,
@@ -45,6 +47,60 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
+# Baseline / summary containers
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class CrossValidationSummary:
+    """Aggregate cross-validation statistics for one configuration."""
+
+    config_name: str
+    folds: int
+    f1_mean: float
+    f1_std: float
+    auc_mean: float | None
+    auc_std: float | None
+
+
+class KeywordBaseline:
+    """Simple binary keyword baseline for comparison with the detector configs."""
+
+    keywords = ["ignore", "system prompt", "reveal", "instructions", "bypass"]
+
+    def __init__(self, keywords: list[str] | None = None) -> None:
+        if keywords is not None:
+            self.keywords = keywords
+        self.mode = "baseline"
+
+    def scan(self, text: str, source_type: str = "user") -> DetectionResult:
+        lowered = text.lower()
+        hits: list[HitRecord] = []
+        for keyword in self.keywords:
+            if keyword in lowered:
+                hits.append(
+                    HitRecord(
+                        pattern_id=f"KW-{keyword.replace(' ', '_').upper()}",
+                        category="keyword_baseline",
+                        severity="medium",
+                        description=f"Keyword '{keyword}' matched",
+                    )
+                )
+
+        risk_score = min(len(hits) / max(len(self.keywords), 1), 1.0)
+        return DetectionResult(
+            text_preview=text[:200],
+            source_type=source_type,
+            is_injection=bool(hits),
+            risk_score=risk_score,
+            hits=hits,
+            hit_categories=["keyword_baseline"] if hits else [],
+            classifier_score=None,
+            latency_ms=0.0,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Per-config result
 # ---------------------------------------------------------------------------
 
@@ -57,7 +113,9 @@ class ConfigResult:
     mode: str               # "rules" | "hybrid" | "full"
     metrics: MetricsReport
     latency: LatencyReport
+    synthetic_metrics: MetricsReport | None = None
     per_category: dict[str, MetricsReport] = field(default_factory=dict)
+    synthetic_per_category: dict[str, MetricsReport] = field(default_factory=dict)
     sweep: list[ThresholdPoint] = field(default_factory=list)
 
 
@@ -77,18 +135,30 @@ class BenchmarkResult:
     config_b : ConfigResult
     config_c : ConfigResult
     n_train : int
-    n_test : int
+    n_synthetic_test : int
+    n_real_world_test : int
+    synthetic_metrics : dict[str, MetricsReport]
     real_world_metrics : dict[str, MetricsReport]
-        Per-config metrics computed on the real-world sample (may be empty
-        if no real-world records are provided).
+    synthetic_baseline_metrics : dict[str, MetricsReport]
+    real_world_baseline_metrics : dict[str, MetricsReport]
+    benign_fpr : dict[str, float]
+    white_box_metrics : dict[str, MetricsReport]
+    cross_validation : dict[str, CrossValidationSummary]
     """
 
     config_a: ConfigResult
     config_b: ConfigResult
     config_c: ConfigResult
     n_train: int
-    n_test: int
+    n_synthetic_test: int
+    n_real_world_test: int
+    synthetic_metrics: dict[str, MetricsReport] = field(default_factory=dict)
     real_world_metrics: dict[str, MetricsReport] = field(default_factory=dict)
+    synthetic_baseline_metrics: dict[str, MetricsReport] = field(default_factory=dict)
+    real_world_baseline_metrics: dict[str, MetricsReport] = field(default_factory=dict)
+    benign_fpr: dict[str, float] = field(default_factory=dict)
+    white_box_metrics: dict[str, MetricsReport] = field(default_factory=dict)
+    cross_validation: dict[str, CrossValidationSummary] = field(default_factory=dict)
 
     def configs(self) -> list[ConfigResult]:
         return [self.config_a, self.config_b, self.config_c]

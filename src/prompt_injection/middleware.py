@@ -160,6 +160,7 @@ class PromptInjectionMiddleware(AgentMiddleware):
         scan_categories: list[str] | None = None,
         scan_tool_outputs: bool = True,
         scan_after_model: bool = True,
+        double_scan: bool = False,
         log_detections: bool = True,
         annotate_key: str = "prompt_injection_alerts",
     ) -> None:
@@ -181,6 +182,7 @@ class PromptInjectionMiddleware(AgentMiddleware):
         )
         self.scan_tool_outputs = scan_tool_outputs
         self.scan_after_model = scan_after_model
+        self.double_scan = double_scan
         self.log_detections = log_detections
         self.annotate_key = annotate_key
         self.mode = mode
@@ -232,12 +234,12 @@ class PromptInjectionMiddleware(AgentMiddleware):
 
     def wrap_model_call(self, call: Any, state: dict[str, Any], runtime: Any) -> Any:
         """
-        Wrap the actual LLM API call.  Runs before_model scan again on
-        the final assembled state (in case state was mutated between
-        hooks), then delegates to *call*, then runs after_model scan.
+        Wrap the actual LLM API call.  Optionally re-runs the input scan
+        only when ``double_scan=True`` for explicit belt-and-suspenders
+        mode, then delegates to *call* and scans the raw model output.
         """
-        # Pre-call scan (belt-and-suspenders on the final state).
-        self.before_model(state, runtime)
+        if self.double_scan:
+            self.before_model(state, runtime)
 
         response = call(state, runtime)
 
@@ -278,15 +280,9 @@ class PromptInjectionMiddleware(AgentMiddleware):
         if not isinstance(content, str) or not content.strip():
             return None
 
-        detection = self._detector.scan(content, source_type="model_output")
-        if not detection.is_injection:
+        policy = self._scan_model_output(last_ai)
+        if policy is None:
             return None
-
-        self._log(detection, hook="after_model")
-        policy = self._policy.decide(detection, content)
-
-        if policy.action == PolicyDecision.BLOCK:
-            raise policy.exception
 
         if policy.action == PolicyDecision.ANNOTATE and policy.annotation:
             return policy.annotation
@@ -416,17 +412,19 @@ class PromptInjectionMiddleware(AgentMiddleware):
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _scan_model_output(self, response: Any) -> None:
+    def _scan_model_output(self, response: Any) -> PolicyResult | None:
         """Extract text from a raw LLM response and scan it."""
         text = self._extract_text(response)
         if not text:
-            return
+            return None
         det = self._detector.scan(text, source_type="model_output")
         if det.is_injection:
             self._log(det, hook="model_output_scan")
             policy = self._policy.decide(det, text)
             if policy.action == PolicyDecision.BLOCK:
                 raise policy.exception
+            return policy
+        return None
 
     @staticmethod
     def _extract_text(obj: Any) -> str:

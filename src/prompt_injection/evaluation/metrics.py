@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+import hashlib
+import random
 from typing import Optional
 
 
@@ -338,10 +340,36 @@ def threshold_sweep(
     return points
 
 
+def _category_seed(seed: int, category: str) -> int:
+    digest = hashlib.sha256(f"{seed}:{category}".encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big", signed=False)
+
+
+def _balanced_category_indices(
+    records: list,
+    category: str,
+    *,
+    seed: int,
+) -> list[int]:
+    positive_indices = [i for i, record in enumerate(records) if record.attack_category == category]
+    negative_indices = [i for i, record in enumerate(records) if record.label == 0]
+
+    if not positive_indices or not negative_indices:
+        return positive_indices
+
+    sample_size = min(len(positive_indices), len(negative_indices))
+    rng = random.Random(_category_seed(seed, category))
+    sampled_positives = positive_indices if len(positive_indices) <= sample_size else rng.sample(positive_indices, sample_size)
+    sampled_negatives = rng.sample(negative_indices, sample_size)
+    return sorted(sampled_positives + sampled_negatives)
+
+
 def per_category_metrics(
     records: list,          # list[DataRecord]
     y_pred: list[int],
     y_scores: list[float] | None = None,
+    *,
+    seed: int = 42,
 ) -> dict[str, MetricsReport]:
     """
     Compute metrics broken down by attack category.
@@ -364,7 +392,9 @@ def per_category_metrics(
     results: dict[str, MetricsReport] = {}
 
     for cat in categories:
-        indices = [i for i, r in enumerate(records) if r.attack_category == cat or r.label == 0]
+        indices = _balanced_category_indices(records, cat, seed=seed)
+        if not indices:
+            continue
         yt = [records[i].label for i in indices]
         yp = [y_pred[i] for i in indices]
         ys = [y_scores[i] for i in indices] if y_scores else None

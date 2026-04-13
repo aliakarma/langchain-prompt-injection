@@ -315,10 +315,11 @@ def _augment(templates: list[dict], target: int, rng: random.Random) -> list[dic
     Simple data augmentation: add light paraphrases to reach *target* count.
     Augmentations: capitalisation, trailing period, mild reordering prefix.
     """
-    augmented = list(templates)
+    augmented: list[tuple[int, dict]] = list(enumerate(templates))
     prefixes = ["Please ", "Actually, ", "Note: ", "Hey, "]
     while len(augmented) < target:
-        base = rng.choice(templates)
+        family_index = rng.randrange(len(templates))
+        base = templates[family_index]
         text = base["text"]
         transform = rng.randint(0, 3)
         if transform == 0:
@@ -329,7 +330,7 @@ def _augment(templates: list[dict], target: int, rng: random.Random) -> list[dic
             text = rng.choice(prefixes) + text[0].lower() + text[1:]
         else:
             text = text.rstrip(".") + "."
-        augmented.append({**base, "text": text})
+        augmented.append((family_index, {**base, "text": text}))
     return augmented[:target]
 
 
@@ -378,18 +379,18 @@ class SyntheticDataset:
         ben_raw = _augment(_BENIGN_TEMPLATES, self.n_benign, rng)
 
         records: list[DataRecord] = []
-        for i, tmpl in enumerate(inj_raw):
+        for i, (family_index, tmpl) in enumerate(inj_raw):
             records.append(DataRecord(
-                id=f"syn-inj-{i:04d}",
+                id=f"syn-inj-{family_index:02d}-{i:04d}",
                 text=tmpl["text"],
                 label=1,
                 attack_category=tmpl["cat"],
                 source_type=tmpl["src"],
                 severity=tmpl["sev"],
             ))
-        for i, tmpl in enumerate(ben_raw):
+        for i, (family_index, tmpl) in enumerate(ben_raw):
             records.append(DataRecord(
-                id=f"syn-ben-{i:04d}",
+                id=f"syn-ben-{family_index:02d}-{i:04d}",
                 text=tmpl["text"],
                 label=0,
                 attack_category=None,
@@ -455,17 +456,45 @@ class SyntheticDataset:
         Returns (train_dataset, test_dataset).
         """
         rng = random.Random(seed or self.seed)
+
+        def _group_records(records: list[DataRecord]) -> dict[str, list[DataRecord]]:
+            grouped: dict[str, list[DataRecord]] = {}
+            for record in records:
+                group_id = record.id.rsplit("-", 1)[0]
+                grouped.setdefault(group_id, []).append(record)
+            return grouped
+
+        def _split_grouped_records(
+            grouped_records: dict[str, list[DataRecord]],
+            target_count: int,
+        ) -> tuple[list[DataRecord], list[DataRecord]]:
+            keys = list(grouped_records.keys())
+            rng.shuffle(keys)
+            test_keys: list[str] = []
+            test_count = 0
+            for key in keys:
+                if test_count >= target_count:
+                    break
+                test_keys.append(key)
+                test_count += len(grouped_records[key])
+            train_keys = [key for key in keys if key not in set(test_keys)]
+            train_records = [record for key in train_keys for record in grouped_records[key]]
+            test_records = [record for key in test_keys for record in grouped_records[key]]
+            return train_records, test_records
+
         positives = [r for r in self._records if r.label == 1]
         negatives = [r for r in self._records if r.label == 0]
-
-        rng.shuffle(positives)
-        rng.shuffle(negatives)
+        positive_groups = _group_records(positives)
+        negative_groups = _group_records(negatives)
 
         n_pos_test = max(1, int(len(positives) * test_size))
         n_neg_test = max(1, int(len(negatives) * test_size))
 
-        test_records = positives[:n_pos_test] + negatives[:n_neg_test]
-        train_records = positives[n_pos_test:] + negatives[n_neg_test:]
+        pos_train, pos_test = _split_grouped_records(positive_groups, n_pos_test)
+        neg_train, neg_test = _split_grouped_records(negative_groups, n_neg_test)
+
+        test_records = pos_test + neg_test
+        train_records = pos_train + neg_train
 
         train_ds = SyntheticDataset.__new__(SyntheticDataset)
         train_ds._records = train_records
@@ -509,6 +538,12 @@ class SyntheticDataset:
         """Return a new dataset containing only records from *source_type*."""
         ds = SyntheticDataset.__new__(SyntheticDataset)
         ds._records = [r for r in self._records if r.source_type == source_type]
+        return ds
+
+    def filter_by_label(self, label: int) -> "SyntheticDataset":
+        """Return a new dataset containing only records with *label*."""
+        ds = SyntheticDataset.__new__(SyntheticDataset)
+        ds._records = [r for r in self._records if r.label == label]
         return ds
 
     def filter_by_category(self, category: str) -> "SyntheticDataset":
