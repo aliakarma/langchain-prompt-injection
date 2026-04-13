@@ -613,7 +613,7 @@ class SyntheticDataset:
         suffix = path.suffix.lower()
         if suffix == ".jsonl":
             rows: list[dict] = []
-            with path.open("r", encoding="utf-8") as fh:
+            with path.open("r", encoding="utf-8-sig") as fh:
                 for line in fh:
                     line = line.strip()
                     if not line:
@@ -622,7 +622,7 @@ class SyntheticDataset:
             return rows
 
         if suffix == ".json":
-            with path.open("r", encoding="utf-8") as fh:
+            with path.open("r", encoding="utf-8-sig") as fh:
                 payload = json.load(fh)
             if isinstance(payload, list):
                 return [row for row in payload if isinstance(row, dict)]
