@@ -15,6 +15,8 @@ Public API
     BenchmarkRunner       – Three-configuration ablation orchestrator.
     BenchmarkResult       – Full ablation output.
     ConfigResult          – Per-configuration result.
+    CrossValidationSummary – Mean/std summary across folds.
+    KeywordBaseline       – Simple external baseline.
     PerformanceProfiler   – Latency and throughput profiling.
     LatencyReport         – Structured latency output.
     time_detector         – Convenience latency helper.
@@ -34,6 +36,8 @@ from prompt_injection.evaluation.benchmark import (
     BenchmarkRunner,
     BenchmarkResult,
     ConfigResult,
+    CrossValidationSummary,
+    KeywordBaseline,
 )
 from prompt_injection.evaluation.performance import (
     PerformanceProfiler,
@@ -47,6 +51,7 @@ __all__ = [
     "compute_metrics", "MetricsReport", "ConfusionMatrix",
     "ThresholdPoint", "threshold_sweep", "per_category_metrics",
     "BenchmarkRunner", "BenchmarkResult", "ConfigResult",
+    "CrossValidationSummary", "KeywordBaseline",
     "PerformanceProfiler", "LatencyReport", "time_detector",
     "ReportSerializer",
 ]

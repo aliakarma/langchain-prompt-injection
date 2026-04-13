@@ -51,6 +51,22 @@ class ReportSerializer:
         print("=" * 70)
         print(self.result.summary_table())
 
+        if self.result.synthetic_metrics:
+            print("\n── In-Distribution Upper Bound ────────────────────────────────────")
+            print(self.result.dataset_table("Synthetic test", self.result.synthetic_metrics))
+
+        if self.result.real_world_metrics:
+            print("\n── Out-of-Distribution Primary Result ─────────────────────────────")
+            print(self.result.dataset_table("Real-world test", self.result.real_world_metrics))
+
+        if self.result.synthetic_baseline_metrics:
+            print("\n── Synthetic Baseline ─────────────────────────────────────────────")
+            print(self.result.baseline_table("Keyword baseline", self.result.synthetic_baseline_metrics))
+
+        if self.result.real_world_baseline_metrics:
+            print("\n── Real-World Baseline ────────────────────────────────────────────")
+            print(self.result.baseline_table("Keyword baseline", self.result.real_world_baseline_metrics))
+
         print("\n── Per-Category Breakdown ──────────────────────────────────────────")
         for cfg in self.result.configs():
             print(f"\n  [{cfg.config_name}]")
@@ -69,12 +85,26 @@ class ReportSerializer:
             for line in cfg.latency.summary().split("\n"):
                 print(f"    {line}")
 
-        if self.result.real_world_metrics:
-            print("\n── Real-World Sample Metrics ───────────────────────────────────────")
-            for name, m in self.result.real_world_metrics.items():
-                print(f"\n  [{name}]")
-                for line in m.summary().split("\n"):
-                    print(f"    {line}")
+        if self.result.cross_validation:
+            print("\n── 5-Fold Cross-Validation (Synthetic) ───────────────────────────")
+            for name, summary in self.result.cross_validation.items():
+                print(
+                    f"  [{name}] F1={summary.f1_mean:.4f} ± {summary.f1_std:.4f}"
+                    + (
+                        f"   AUC={summary.auc_mean:.4f} ± {summary.auc_std:.4f}"
+                        if summary.auc_mean is not None and summary.auc_std is not None
+                        else ""
+                    )
+                )
+
+        if self.result.benign_fpr:
+            print("\n── False Positive Rate on Benign Data ─────────────────────────────")
+            for name, value in self.result.benign_fpr.items():
+                print(f"  [{name}] FPR={value:.4f}")
+
+        if self.result.white_box_metrics:
+            print("\n── White-Box Evasion Benchmark ───────────────────────────────────")
+            print(self.result.dataset_table("White-box evasion", self.result.white_box_metrics))
 
         best = self.result.best_f1()
         fast = self.result.fastest()
@@ -104,7 +134,8 @@ class ReportSerializer:
         return {
             "summary": {
                 "n_train": result.n_train,
-                "n_test": result.n_test,
+                "n_synthetic_test": result.n_synthetic_test,
+                "n_real_world_test": result.n_real_world_test,
                 "best_f1_config": result.best_f1().config_name,
                 "fastest_config": result.fastest().config_name,
             },
@@ -121,9 +152,33 @@ class ReportSerializer:
                 }
                 for cfg in result.configs()
             ],
+            "synthetic_metrics": {
+                name: m.to_dict() for name, m in result.synthetic_metrics.items()
+            },
             "real_world_metrics": {
                 name: m.to_dict()
                 for name, m in result.real_world_metrics.items()
+            },
+            "synthetic_baseline_metrics": {
+                name: m.to_dict() for name, m in result.synthetic_baseline_metrics.items()
+            },
+            "real_world_baseline_metrics": {
+                name: m.to_dict() for name, m in result.real_world_baseline_metrics.items()
+            },
+            "benign_fpr": result.benign_fpr,
+            "white_box_metrics": {
+                name: m.to_dict() for name, m in result.white_box_metrics.items()
+            },
+            "cross_validation": {
+                name: {
+                    "config_name": summary.config_name,
+                    "folds": summary.folds,
+                    "f1_mean": summary.f1_mean,
+                    "f1_std": summary.f1_std,
+                    "auc_mean": summary.auc_mean,
+                    "auc_std": summary.auc_std,
+                }
+                for name, summary in result.cross_validation.items()
             },
         }
 

@@ -171,3 +171,18 @@ class TestPerCategoryMetrics:
             assert 0.0 <= m.precision <= 1.0
             assert 0.0 <= m.recall <= 1.0
             assert 0.0 <= m.f1 <= 1.0
+
+    def test_balanced_sampling_is_deterministic(self):
+        records = [
+            DataRecord(id=f"pos-{i}", text=f"attack {i}", label=1, attack_category="cat-a", source_type="user", severity="high")
+            for i in range(3)
+        ] + [
+            DataRecord(id=f"ben-{i}", text=f"benign {i}", label=0, attack_category=None, source_type="user", severity=None)
+            for i in range(10)
+        ]
+        y_pred = [r.label for r in records]
+        first = per_category_metrics(records, y_pred, seed=7)["cat-a"]
+        second = per_category_metrics(records, y_pred, seed=7)["cat-a"]
+        assert first.n_samples == 6
+        assert first.n_samples == second.n_samples
+        assert first.f1 == second.f1

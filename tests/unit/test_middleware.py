@@ -195,6 +195,30 @@ class TestAfterModelHook:
         result = guard.after_model(state, runtime=None)
         assert result is None
 
+    def test_attack_ai_output_blocks(self):
+        guard = make_guard()
+        state = self._state([{"role": "ai", "content": ATTACK}])
+        with pytest.raises(PromptInjectionError):
+            guard.after_model(state, runtime=None)
+
+    def test_attack_ai_output_annotates(self):
+        guard = make_guard(strategy="annotate")
+        state = self._state([{"role": "assistant", "content": ATTACK}])
+        result = guard.after_model(state, runtime=None)
+        assert isinstance(result, dict)
+        assert len(result) > 0
+
+    def test_scan_model_output_helper_blocks(self):
+        guard = make_guard()
+        with pytest.raises(PromptInjectionError):
+            guard._scan_model_output({"content": ATTACK})
+
+    def test_scan_model_output_helper_annotates(self):
+        guard = make_guard(strategy="annotate")
+        policy = guard._scan_model_output({"content": ATTACK})
+        assert policy is not None
+        assert policy.action == PolicyDecision.ANNOTATE
+
 
 # ── wrap_tool_call() hook ─────────────────────────────────────────────────
 
@@ -228,6 +252,24 @@ class TestWrapToolCallHook:
         tool = self._make_tool("safe output")
         with pytest.raises(PromptInjectionError):
             guard.wrap_tool_call(tool, ATTACK, {}, runtime=None)
+
+
+# ── wrap_model_call() hook ───────────────────────────────────────────────
+
+class TestWrapModelCallHook:
+    def test_does_not_rescan_input_by_default(self):
+        guard = make_guard()
+
+        def fail_if_called(*args, **kwargs):
+            raise AssertionError("before_model should not be called by wrap_model_call by default")
+
+        guard.before_model = fail_if_called  # type: ignore[method-assign]
+
+        def model_call(state, runtime):
+            return {"content": "The capital of France is Paris."}
+
+        result = guard.wrap_model_call(model_call, {"messages": [{"role": "user", "content": BENIGN}]}, runtime=None)
+        assert result == {"content": "The capital of France is Paris."}
 
 
 # ── _extract_text() helper ────────────────────────────────────────────────

@@ -29,15 +29,27 @@ from prompt_injection.evaluation.performance import (
 @pytest.fixture(scope="module")
 def datasets():
     ds = SyntheticDataset(n_injections=80, n_benign=80, seed=42).generate()
-    train_ds, test_ds = ds.train_test_split(test_size=0.20, seed=42)
-    return train_ds, test_ds
+    train_ds, synthetic_test_ds = ds.train_test_split(test_size=0.20, seed=42)
+    return train_ds, synthetic_test_ds
 
 
 @pytest.fixture(scope="module")
-def benchmark_result(datasets):
-    train_ds, test_ds = datasets
+def real_world_dataset():
+    rw = SyntheticDataset()
+    import pathlib
+    base = pathlib.Path(__file__).parents[3] / "data" / "real"
+    if not base.exists():
+        pytest.skip("data/real not found")
+    rw.load_from_path(base / "injections_real.jsonl")
+    rw.load_from_path(base / "benign_real.jsonl")
+    return rw
+
+
+@pytest.fixture(scope="module")
+def benchmark_result(datasets, real_world_dataset):
+    train_ds, synthetic_test_ds = datasets
     runner = BenchmarkRunner(threshold=0.50, n_latency_runs=5, sweep_thresholds=True)
-    return runner.run(train_ds, test_ds)
+    return runner.run(train_ds, real_world_dataset, synthetic_test_ds)
 
 
 # ── BenchmarkResult structure ─────────────────────────────────────────────
@@ -60,10 +72,11 @@ class TestBenchmarkResult:
         modes = {c.mode for c in benchmark_result.configs()}
         assert modes == {"rules", "hybrid", "full"}
 
-    def test_n_train_n_test_set(self, benchmark_result, datasets):
-        train_ds, test_ds = datasets
+    def test_n_train_n_test_set(self, benchmark_result, datasets, real_world_dataset):
+        train_ds, synthetic_test_ds = datasets
         assert benchmark_result.n_train == len(train_ds)
-        assert benchmark_result.n_test  == len(test_ds)
+        assert benchmark_result.n_synthetic_test == len(synthetic_test_ds)
+        assert benchmark_result.n_real_world_test == len(real_world_dataset)
 
     def test_best_f1_returns_config_result(self, benchmark_result):
         best = benchmark_result.best_f1()
@@ -78,6 +91,8 @@ class TestBenchmarkResult:
         assert "A: Regex only"      in table
         assert "B: Regex + Scoring" in table
         assert "C: + Classifier"    in table
+        assert "Synthetic test" in table
+        assert "Real test" in table
 
 
 # ── ConfigResult metrics ──────────────────────────────────────────────────
@@ -94,17 +109,28 @@ class TestConfigResultMetrics:
             cm = cfg.metrics.confusion
             assert cm.tp + cm.fp + cm.tn + cm.fn == cfg.metrics.n_samples
 
-    def test_rules_config_has_no_auc(self, benchmark_result):
-        # Config A (rules) uses binary scores → AUC undefined
-        assert benchmark_result.config_a.metrics.roc_auc is None
-
-    def test_hybrid_config_has_auc(self, benchmark_result):
-        assert benchmark_result.config_b.metrics.roc_auc is not None
-        assert 0.0 <= benchmark_result.config_b.metrics.roc_auc <= 1.0
+    def test_all_configs_have_auc(self, benchmark_result):
+        for cfg in benchmark_result.configs():
+            assert cfg.metrics.roc_auc is not None
+            assert 0.0 <= cfg.metrics.roc_auc <= 1.0
 
     def test_per_category_populated(self, benchmark_result):
         for cfg in benchmark_result.configs():
             assert len(cfg.per_category) > 0
+
+    def test_synthetic_metrics_populated(self, benchmark_result):
+        assert len(benchmark_result.synthetic_metrics) == 3
+        assert len(benchmark_result.real_world_metrics) == 3
+
+    def test_cross_validation_summary_populated(self, benchmark_result):
+        assert len(benchmark_result.cross_validation) == 3
+        for summary in benchmark_result.cross_validation.values():
+            assert summary.folds == 5
+            assert summary.f1_mean >= 0.0
+
+    def test_benign_fpr_and_white_box_metrics_populated(self, benchmark_result):
+        assert len(benchmark_result.benign_fpr) == 3
+        assert len(benchmark_result.white_box_metrics) == 3
 
     def test_sweep_populated_for_b_and_c(self, benchmark_result):
         assert len(benchmark_result.config_b.sweep) > 0
@@ -117,17 +143,10 @@ class TestConfigResultMetrics:
 # ── Real-world integration ────────────────────────────────────────────────
 
 class TestRealWorldIntegration:
-    def test_real_world_metrics_populated(self, datasets):
-        train_ds, test_ds = datasets
-        rw = SyntheticDataset()
-        import pathlib
-        base = pathlib.Path(__file__).parents[3] / "data" / "real"
-        if not base.exists():
-            pytest.skip("data/real not found")
-        rw.load_from_path(base / "injections_real.jsonl")
-        rw.load_from_path(base / "benign_real.jsonl")
+    def test_real_world_metrics_populated(self, datasets, real_world_dataset):
+        train_ds, synthetic_test_ds = datasets
         runner = BenchmarkRunner(n_latency_runs=3, sweep_thresholds=False)
-        result = runner.run(train_ds, test_ds, real_world_dataset=rw)
+        result = runner.run(train_ds, real_world_dataset, synthetic_test_ds)
         assert len(result.real_world_metrics) == 3
 
 
