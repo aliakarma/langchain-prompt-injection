@@ -1,41 +1,9 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
 title: "Prompt Injection Defense Framework for LangChain"
 version: "1.0.0"
-doi: ""  # Add Zenodo DOI after release (e.g., 10.5281/zenodo.xxxxxxx)
-date-released: 2026-04-12
-license: MIT
+date-released: 2026-04-13
 
 authors:
 
 * family-names: "Akarma"
   given-names: "Ali"
-
-abstract: >
-A production-ready prompt injection detection framework for LangChain,
-providing multi-layer defense through regex-based patterns, heuristic scoring,
-and optional machine learning classification. The system includes evaluation
-pipelines for synthetic, real-world, and adversarial datasets, along with
-middleware integration for agentic AI systems.
-
-keywords:
-
-* prompt injection
-* LLM security
-* LangChain
-* AI safety
-* adversarial machine learning
-* middleware
-
-repository-code: "https://github.com/<your-username>/langchain-prompt-injection"
-url: "https://github.com/<your-username>/langchain-prompt-injection"
-
-preferred-citation:
-type: software
-title: "Prompt Injection Defense Framework for LangChain"
-authors:
-- family-names: "Akarma"
-given-names: "Ali"
-year: 2026
-version: "1.0.0"
-doi: ""  # Fill after Zenodo generates DOI
