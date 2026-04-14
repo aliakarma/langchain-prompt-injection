@@ -5,19 +5,19 @@
 
 ## 1. DATASET SUMMARY
 
-### Total Samples: 41,864
+### Total Samples: 41,005
 
 **Label Distribution:**
-- Injections (label=1): 20,522 (49.0%)
-- Benign (label=0): 21,342 (51.0%)
+- Injections (label=1): 20,522 (50.0%)
+- Benign (label=0): 20,483 (50.0%)
 
 **Source Distribution:**
 - benign_real: 500 (1.2%)
-- hackaprompt: 19,803 (47.3%)
+- hackaprompt: 18,944 (46.2%)
 - jailbreak: 1,032 (2.5%)
 - prompt-injections: 546 (1.3%)
-- squad: 4,983 (11.9%)
-- wikipedia: 15,000 (35.8%)
+- squad: 4,983 (12.2%)
+- wikipedia: 15,000 (36.6%)
 
 ### Data Cleaning
 - Benign rows fetched: 20,500
@@ -33,19 +33,19 @@
 ## 2. DATASET SPLITS
 
 **Training Set (70%)**
-- Size: 29,304
-- Labels: {0: 14939, 1: 14365}
-- Sources: {'wikipedia': 10545, 'benign_real': 343, 'hackaprompt': 13843, 'squad': 3450, 'prompt-injections': 386, 'jailbreak': 737}
+- Size: 28,703
+- Labels: {0: 14338, 1: 14365}
+- Sources: {'wikipedia': 10545, 'benign_real': 343, 'hackaprompt': 13242, 'squad': 3450, 'prompt-injections': 386, 'jailbreak': 737}
 
 **Validation Set (15%)**
-- Size: 6,280
-- Labels: {0: 3202, 1: 3078}
-- Sources: {'wikipedia': 2217, 'hackaprompt': 2970, 'benign_real': 84, 'squad': 776, 'prompt-injections': 81, 'jailbreak': 152}
+- Size: 6,151
+- Labels: {0: 3073, 1: 3078}
+- Sources: {'wikipedia': 2217, 'hackaprompt': 2841, 'benign_real': 84, 'squad': 776, 'prompt-injections': 81, 'jailbreak': 152}
 
 **Test Set (15%)**
-- Size: 6,280
-- Labels: {0: 3201, 1: 3079}
-- Sources: {'squad': 757, 'wikipedia': 2238, 'hackaprompt': 2990, 'jailbreak': 143, 'prompt-injections': 79, 'benign_real': 73}
+- Size: 6,151
+- Labels: {0: 3072, 1: 3079}
+- Sources: {'squad': 757, 'wikipedia': 2238, 'hackaprompt': 2861, 'jailbreak': 143, 'prompt-injections': 79, 'benign_real': 73}
 
 **Text Overlap Verification:** ✓ No overlap between splits
 

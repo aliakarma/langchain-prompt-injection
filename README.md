@@ -429,7 +429,7 @@ AUC values on small datasets should be interpreted with caution.
 ### Real-Data Evaluation
 
 Datasets used: HackAPrompt, prompt-injections, jailbreak, Wikipedia (benign), and SQuAD (benign).
-Final dataset composition: 41,864 total samples, with 20,522 injections (~49%) and 20,483 benign samples (~51%).
+Final dataset composition: 41,864 total samples, with 20,522 injections (~49%) and 21,342 benign samples (~51%).
 
 ### Benchmark Artifacts
 
