@@ -24,6 +24,16 @@ Public API
 """
 
 from prompt_injection.evaluation.dataset import SyntheticDataset, DataRecord
+from prompt_injection.evaluation.real_dataset import (
+    REQUIRED_EXTERNAL_RAW_FILES,
+    DatasetSplit,
+    ExternalRawDatasetBundle,
+    ExternalRawFileSummary,
+    ExternalRawRecord,
+    ExternalRawSplitBundle,
+    load_required_external_raw_datasets,
+    split_external_raw_dataset,
+)
 from prompt_injection.evaluation.metrics import (
     compute_metrics,
     MetricsReport,
@@ -51,6 +61,10 @@ from prompt_injection.evaluation.report import ReportSerializer
 
 __all__ = [
     "SyntheticDataset", "DataRecord",
+    "ExternalRawRecord", "ExternalRawFileSummary", "ExternalRawDatasetBundle",
+    "DatasetSplit", "ExternalRawSplitBundle",
+    "REQUIRED_EXTERNAL_RAW_FILES",
+    "load_required_external_raw_datasets", "split_external_raw_dataset",
     "compute_metrics", "MetricsReport", "ConfusionMatrix",
     "MetricCI", "compute_false_positive_rate", "bootstrap_confidence_intervals",
     "ThresholdPoint", "threshold_sweep", "per_category_metrics",

@@ -1,4 +1,0 @@
-config_name,mode,precision,recall,f1,accuracy,roc_auc,average_precision,mean_latency_ms,p95_latency_ms,throughput_rps,tp,fp,tn,fn
-A: Regex only,rules,1.0,0.4138,0.5854,0.7069,0.7069,0.9834,0.103,0.161,9719.0,12,0,29,17
-B: Regex + Scoring,hybrid,1.0,0.3793,0.55,0.6897,0.9608,0.9731,0.129,0.191,7761.0,11,0,29,18
-C: + Classifier,full,1.0,0.4138,0.5854,0.7069,0.9964,0.9968,1.913,2.765,522.7,12,0,29,17

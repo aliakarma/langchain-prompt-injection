@@ -593,9 +593,11 @@ class InjectionDetector:
 
     @staticmethod
     def _is_obfuscated_attack(original_text: str, normalized_text: str) -> bool:
-        compact_orig = "".join(original_text.lower().split())
-        compact_norm = "".join(normalized_text.lower().split())
-        changed = compact_orig != compact_norm
+        normalized_original = " ".join(original_text.lower().split())
+        normalized_detected = " ".join(normalized_text.lower().split())
+        compact_orig = "".join(normalized_original.split())
+        compact_norm = "".join(normalized_detected.split())
+        changed = normalized_original != normalized_detected
         lower_norm = normalized_text.lower()
         suspicious_norm = any(
             phrase in lower_norm

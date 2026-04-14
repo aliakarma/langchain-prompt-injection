@@ -20,11 +20,12 @@ def report_serializer():
     train_ds, synthetic_test_ds = ds.train_test_split(test_size=0.20, seed=42)
     rw = SyntheticDataset()
     import pathlib
-    base = pathlib.Path(__file__).parents[3] / "data" / "real"
-    if not base.exists():
-        pytest.skip("data/real not found")
-    rw.load_from_path(base / "injections_real.jsonl")
-    rw.load_from_path(base / "benign_real.jsonl")
+    real_base = pathlib.Path(__file__).parents[3] / "data" / "real"
+    benign_base = pathlib.Path(__file__).parents[3] / "data" / "benign"
+    if not real_base.exists() or not benign_base.exists():
+        pytest.skip("real dataset folders not found")
+    rw.load_from_path(real_base / "injections_real_v4.jsonl")
+    rw.load_from_path(benign_base / "benign_real_v2.jsonl")
     result = BenchmarkRunner(n_latency_runs=3, sweep_thresholds=False).run(train_ds, rw, synthetic_test_ds)
     return ReportSerializer(result)
 

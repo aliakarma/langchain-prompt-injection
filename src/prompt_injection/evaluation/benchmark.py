@@ -26,8 +26,10 @@ Usage
 
 from __future__ import annotations
 
+import json
 import random
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from sklearn.model_selection import StratifiedKFold
@@ -49,6 +51,57 @@ from prompt_injection.evaluation.performance import LatencyReport, PerformancePr
 
 if TYPE_CHECKING:
     pass
+
+
+def load_real_test_set(
+    injections_path: str | Path = "data/real/injections_real_v4.jsonl",
+    benign_path: str | Path = "data/benign/benign_real_v2.jsonl",
+    *,
+    seed: int = 42,
+) -> SyntheticDataset:
+    """
+    Load and combine real injection + benign JSONL files into one shuffled test set.
+
+    The output is deterministic with a fixed seed and includes an assertion that
+    both labels (0 and 1) are present.
+    """
+    inj_p = Path(injections_path)
+    ben_p = Path(benign_path)
+    if not inj_p.exists():
+        raise FileNotFoundError(f"Real injection file not found: {inj_p}")
+    if not ben_p.exists():
+        raise FileNotFoundError(f"Real benign file not found: {ben_p}")
+
+    rows: list[dict[str, Any]] = []
+    for p in (inj_p, ben_p):
+        with p.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                rows.append(json.loads(line))
+
+    rng = random.Random(seed)
+    rng.shuffle(rows)
+
+    labels = {int(r["label"]) for r in rows}
+    if labels != {0, 1}:
+        raise ValueError("Real test set must include both label=0 and label=1 records")
+
+    ds = SyntheticDataset.__new__(SyntheticDataset)
+    ds._records = [
+        DataRecord(
+            id=str(r["id"]),
+            text=str(r["text"]),
+            label=int(r["label"]),
+            attack_category=r.get("attack_category"),
+            source_type="unknown",
+            severity=None,
+        )
+        for r in rows
+    ]
+    ds.seed = seed
+    return ds
 
 
 # ---------------------------------------------------------------------------

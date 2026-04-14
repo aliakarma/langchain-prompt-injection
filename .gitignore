@@ -43,6 +43,17 @@ reports/*.csv
 !reports/category_breakdown_research.csv
 !reports/failure_analysis.json
 
+# Large datasets
+/data/real/injections_real_v4.jsonl
+
+# Generated raw dataset downloads and split artifacts
+/.tmp_external/
+/data/external_raw/
+/results/external_raw_splits/
+
+# Temporary evaluation output staging
+/evaluation_outputs/tmp/
+
 # Generated notebook figures
 *.png
 
@@ -59,3 +70,5 @@ reports/*.csv
 # OS
 .DS_Store
 Thumbs.db
+/.tmp_external
+*.log

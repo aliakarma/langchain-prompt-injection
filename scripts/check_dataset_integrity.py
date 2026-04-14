@@ -92,7 +92,7 @@ def main() -> int:
     default_paths = [
         Path("data/benign/benign_corpus_v2.jsonl"),
         Path("data/external/synthetic_stress_test.jsonl"),
-        Path("data/real/injections_real_v2.jsonl"),
+        Path("data/real/injections_real_v4.jsonl"),
     ]
     paths = [Path(p) for p in args.paths] if args.paths else default_paths
 

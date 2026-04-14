@@ -8,9 +8,11 @@ data/
 │   ├── injections.jsonl   # 250 positive (injection) records
 │   └── benign.jsonl       # 250 negative (benign) records
 └── real/
-    ├── injections_real.jsonl  # 25 manually curated real injection examples
-    ├── benign_real.jsonl      # 25 manually curated real benign examples
+  ├── injections_real_v4.jsonl  # Final real injection examples used in the latest evaluation
     └── SOURCES.md             # Attribution and licensing
+
+└── benign/
+  └── benign_real_v2.jsonl      # Final real benign examples used in the latest evaluation
 ```
 
 ## Record Schema
@@ -65,8 +67,8 @@ ds.load_from_path("data/synthetic/benign.jsonl")
 
 # Load real-world sample
 rw = SyntheticDataset()
-rw.load_from_path("data/real/injections_real.jsonl")
-rw.load_from_path("data/real/benign_real.jsonl")
+rw.load_from_path("data/real/injections_real_v4.jsonl")
+rw.load_from_path("data/benign/benign_real_v2.jsonl")
 
 # Train/test split (stratified)
 train_ds, test_ds = ds.train_test_split(test_size=0.20, seed=42)

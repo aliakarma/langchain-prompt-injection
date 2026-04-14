@@ -396,7 +396,7 @@ PATTERN_REGISTRY: list[PatternEntry] = [
         "id": "EVA-001",
         "category": "evasion",
         "severity": "medium",
-        "pattern": _p(r"(?:\bi\W*g\W*n\W*o\W*r\W*e\b|\bd\W*i\W*s\W*r\W*e\W*g\W*a\W*r\W*d\b).{0,30}(?:\bp\W*r\W*e\W*v\W*i\W*o\W*u\W*s\b|\binstructions?\b)"),
+        "pattern": _p(r"(?:\bi\W+g\W+n\W+o\W+r\W+e\b|\bd\W+i\W+s\W+r\W+e\W+g\W+a\W+r\W+d\b).{0,30}(?:\bp\W+r\W+e\W+v\W+i\W+o\W+u\W+s\b|\binstructions?\b)"),
         "description": "Letter-spaced or punctuated evasion near override intent",
     },
     {

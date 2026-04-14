@@ -99,12 +99,13 @@ class TestIO:
             SyntheticDataset().load_from_path("/nonexistent/path/file.jsonl")
 
     def test_load_real_world_files(self):
-        base = pathlib.Path(__file__).parents[3] / "data" / "real"
-        if not base.exists():
-            pytest.skip("data/real not found")
+        real_base = pathlib.Path(__file__).parents[3] / "data" / "real"
+        benign_base = pathlib.Path(__file__).parents[3] / "data" / "benign"
+        if not real_base.exists() or not benign_base.exists():
+            pytest.skip("real dataset folders not found")
         ds = SyntheticDataset()
-        ds.load_from_path(base / "injections_real.jsonl")
-        ds.load_from_path(base / "benign_real.jsonl")
+        ds.load_from_path(real_base / "injections_real_v4.jsonl")
+        ds.load_from_path(benign_base / "benign_real_v2.jsonl")
         assert len(ds) == 50
         assert ds.n_positive == 25
         assert ds.n_negative == 25
