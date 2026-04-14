@@ -731,7 +731,13 @@ class BenchmarkRunner:
                 (self.CONFIG_NAMES["hybrid"], det_b),
                 (self.CONFIG_NAMES["full"], det_c),
             ]:
-                metrics, _, _ = self._evaluate_dataset(det, test_subset.records(), test_subset.texts(), test_subset.labels(), config_name=name)
+                metrics, _, _, _ = self._evaluate_dataset(
+                    det,
+                    test_subset.records(),
+                    test_subset.texts(),
+                    test_subset.labels(),
+                    config_name=name,
+                )
                 fold_stats[name].append(metrics)
 
         summaries: dict[str, CrossValidationSummary] = {}

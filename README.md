@@ -390,7 +390,7 @@ guard = PromptInjectionMiddleware(trusted_roles=["system", "developer", "admin"]
 
 ## 📊 Results
 
-### Primary Results — Out-of-Distribution (Headline Metric)
+### Primary (Real-world / OOD)
 
 > Use this table as the reportable primary result. These numbers reflect performance on held-out real-world data that was never used for training or threshold selection.
 
@@ -400,7 +400,9 @@ guard = PromptInjectionMiddleware(trusted_roles=["system", "developer", "admin"]
 | B | 1.0000 | 0.3793 | 0.5500 | 0.9608 |
 | C | 1.0000 | 0.4138 | 0.5854 | 0.9964 |
 
-### Synthetic Upper Bound (Diagnostic Only)
+### Synthetic (Upper bound)
+
+Synthetic results represent upper-bound performance and should not be used as primary metric.
 
 > Use this table for debugging and sanity checks only. Synthetic data is template-driven and easier to separate than real-world text. These numbers should not be presented as the main result.
 
@@ -413,6 +415,8 @@ guard = PromptInjectionMiddleware(trusted_roles=["system", "developer", "admin"]
 ### Why the Gap Exists
 
 The synthetic set is template-driven and easier to separate. Real-world prompts include quotes, context, paraphrases, and mixed intent, which reduces recall and increases calibration difficulty. The external stress test is harder still because it includes more diverse phrasing and cross-domain formatting.
+
+AUC values on small datasets should be interpreted with caution.
 
 ### Benchmark Artifacts
 
@@ -434,8 +438,9 @@ Evaluation is structured to avoid data leakage and overclaiming:
 - **Synthetic training split** — used for classifier fitting and cross-validation only.
 - **Held-out synthetic test** — in-distribution upper bound; reported separately from real-world results.
 - **Held-out real-world set** — primary reportable metric set; never used for training.
-- **External dataset** *(optional)* — cross-domain robustness checks; see loading instructions below.
-- **Benign corpus** — false-positive rate evaluation.
+- **External dataset** *(optional)* — cross-domain robustness checks using `synthetic_stress_test`; this file is a synthetic stress test and not real HackAPrompt data.
+- **Benign corpus** — false-positive rate evaluation with a diverse, de-duplicated benign dataset.
+- **Real dataset expansion** — real-world injection coverage has been expanded to improve OOD evaluation breadth.
 - **White-box evasion set** — adversarial degradation analysis.
 - **Bootstrap confidence intervals** — reported for F1 and AUC.
 
@@ -552,6 +557,9 @@ make notebooks
 - Quote-heavy technical text (e.g., security documentation that names attack patterns explicitly) can still trigger false positives.
 - External generalization is better than random but below synthetic upper bounds — expected for a small curated research corpus.
 - The classifier is calibrated and regularized, but the dataset is limited compared with deployment-scale traffic.
+- Previous dataset duplication issue was fixed, but continued data QA is required as the corpus grows.
+- Role hijacking detection was previously weak and has been improved; further hardening is still needed for nuanced persona-shift prompts.
+- Evaluation is still evolving and should be treated as an ongoing benchmark rather than a final scorecard.
 
 ### Planned Fixes
 
