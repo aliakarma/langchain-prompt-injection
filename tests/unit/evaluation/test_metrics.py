@@ -14,6 +14,7 @@ from prompt_injection.evaluation.metrics import (
     MetricCI,
     MetricsReport,
     ThresholdPoint,
+    ThresholdSweepResult,
     _average_precision,
     _confusion,
     _precision_recall_f1,
@@ -135,26 +136,32 @@ class TestComputeMetrics:
 
 class TestThresholdSweep:
     def test_returns_list_of_threshold_points(self):
-        pts = threshold_sweep(Y_TRUE, Y_SCORE, n_thresholds=20)
-        assert len(pts) == 20
-        assert all(isinstance(p, ThresholdPoint) for p in pts)
+        sweep = threshold_sweep(Y_TRUE, Y_SCORE, n_thresholds=20)
+        assert isinstance(sweep, ThresholdSweepResult)
+        assert len(sweep.points) == 20
+        assert all(isinstance(p, ThresholdPoint) for p in sweep.points)
 
     def test_all_thresholds_in_range(self):
-        pts = threshold_sweep(Y_TRUE, Y_SCORE)
-        for p in pts:
+        sweep = threshold_sweep(Y_TRUE, Y_SCORE)
+        for p in sweep.points:
             assert 0.0 <= p.threshold <= 1.0
 
     def test_all_pr_values_valid(self):
-        pts = threshold_sweep(Y_TRUE, Y_SCORE)
-        for p in pts:
+        sweep = threshold_sweep(Y_TRUE, Y_SCORE)
+        for p in sweep.points:
             assert 0.0 <= p.precision <= 1.0
             assert 0.0 <= p.recall <= 1.0
             assert 0.0 <= p.f1 <= 1.0
 
     def test_sorted_ascending_by_threshold(self):
-        pts = threshold_sweep(Y_TRUE, Y_SCORE)
-        thresholds = [p.threshold for p in pts]
+        sweep = threshold_sweep(Y_TRUE, Y_SCORE)
+        thresholds = [p.threshold for p in sweep.points]
         assert thresholds == sorted(thresholds)
+
+    def test_returns_threshold_recommendations(self):
+        sweep = threshold_sweep(Y_TRUE, Y_SCORE)
+        assert 0.0 <= sweep.best_f1_threshold <= 1.0
+        assert sweep.recall_at_0_8_threshold is None or 0.0 <= sweep.recall_at_0_8_threshold <= 1.0
 
 
 class TestPerCategoryMetrics:
