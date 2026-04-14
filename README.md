@@ -231,7 +231,7 @@ make benchmark
 
 ```powershell
 $env:PYTHONPATH = "src"
-python -c "import sys; sys.path.insert(0,'src'); from prompt_injection.evaluation.dataset import SyntheticDataset; from prompt_injection.evaluation.benchmark import BenchmarkRunner; from prompt_injection.evaluation.report import ReportSerializer; import pathlib; ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); tr, syn_te = ds.train_test_split(0.20, seed=42); rw = SyntheticDataset(); [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; ext = SyntheticDataset(); ext_path = pathlib.Path('data/external/hackaprompt_like.jsonl'); ext.load_external_dataset(ext_path, train_texts=set(tr.texts())) if ext_path.exists() else None; result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, syn_te, external_eval_dataset=(ext if len(ext) else None)); s = ReportSerializer(result); s.print_summary(); pathlib.Path('reports').mkdir(exist_ok=True); s.to_json('reports/benchmark.json'); s.to_csv('reports/benchmark.csv'); s.category_csv('reports/category_breakdown.csv')"
+python -c "import sys; sys.path.insert(0,'src'); from prompt_injection.evaluation.dataset import SyntheticDataset; from prompt_injection.evaluation.benchmark import BenchmarkRunner; from prompt_injection.evaluation.report import ReportSerializer; import pathlib; ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); tr, syn_te = ds.train_test_split(0.20, seed=42); rw = SyntheticDataset(); [rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; ext = SyntheticDataset(); ext_path = pathlib.Path('data/external/synthetic_stress_test.jsonl'); ext.load_external_dataset(ext_path, train_texts=set(tr.texts())) if ext_path.exists() else None; result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, syn_te, external_eval_dataset=(ext if len(ext) else None)); s = ReportSerializer(result); s.print_summary(); pathlib.Path('reports').mkdir(exist_ok=True); s.to_json('reports/benchmark.json'); s.to_csv('reports/benchmark.csv'); s.category_csv('reports/category_breakdown.csv')"
 ```
 
 Expected output artifacts:
@@ -473,7 +473,7 @@ ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate()
 train_ds, synthetic_test_ds = ds.train_test_split(test_size=0.20, seed=42)
 
 real_world = SyntheticDataset()
-real_world.load_from_path("data/real/injections_real.jsonl")
+real_world.load_from_path("data/real/injections_real_v2.jsonl")
 real_world.load_from_path("data/real/benign_real.jsonl")
 
 result = BenchmarkRunner().run(train_ds, real_world, synthetic_test_ds)
@@ -482,14 +482,14 @@ ReportSerializer(result).print_summary()
 
 ### Loading an External Dataset (Optional)
 
-External datasets in `.jsonl`, `.json`, or `.csv` format can be loaded with schema normalization and automatic deduplication against the training split. The file `data/external/hackaprompt_like.jsonl` is **not included** in the repository by default; place your own file at that path to enable this step.
+External datasets in `.jsonl`, `.json`, or `.csv` format can be loaded with schema normalization and automatic deduplication against the training split.
 
 ```python
 from prompt_injection.evaluation import SyntheticDataset
 
 external = SyntheticDataset()
 external.load_external_dataset(
-    "data/external/hackaprompt_like.jsonl",
+    "data/external/synthetic_stress_test.jsonl",
     train_texts=set(train_ds.texts())   # deduplicates against training data
 )
 ```

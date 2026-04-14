@@ -58,6 +58,7 @@ class ReportSerializer:
         if self.result.real_world_metrics:
             print("\n── Out-of-Distribution Primary Result ─────────────────────────────")
             print(self.result.dataset_table("Real-world test", self.result.real_world_metrics))
+            print("  Note: AUC may be unreliable for small datasets")
 
         if self.result.external_metrics:
             print("\n── External Dataset Result ───────────────────────────────────────")
@@ -142,6 +143,14 @@ class ReportSerializer:
                         f" | {str(case.get('text', ''))[:90]}"
                     )
 
+        if self.result.default_threshold_results:
+            print("\n── Default Threshold Results ─────────────────────────────────────")
+            print(self.result.dataset_table("Default threshold", self.result.default_threshold_results))
+
+        if self.result.optimized_threshold_results:
+            print("\n── Optimized Threshold Results ───────────────────────────────────")
+            print(self.result.dataset_table("Optimized threshold", self.result.optimized_threshold_results))
+
         best = self.result.best_f1()
         fast = self.result.fastest()
         print(f"\n  ✓ Best F1       : {best.config_name}  (F1={best.metrics.f1:.4f})")
@@ -174,6 +183,7 @@ class ReportSerializer:
                 "n_real_world_test": result.n_real_world_test,
                 "best_f1_config": result.best_f1().config_name,
                 "fastest_config": result.fastest().config_name,
+                "auc_small_dataset_note": "Note: AUC may be unreliable for small datasets",
             },
             "configurations": [
                 {
@@ -234,6 +244,13 @@ class ReportSerializer:
             },
             "domain_shift": result.domain_shift,
             "failure_cases": result.failure_cases,
+            "default_threshold_results": {
+                name: m.to_dict() for name, m in result.default_threshold_results.items()
+            },
+            "optimized_threshold_results": {
+                name: m.to_dict() for name, m in result.optimized_threshold_results.items()
+            },
+            "threshold_recommendations": result.threshold_recommendations,
         }
 
     # ------------------------------------------------------------------

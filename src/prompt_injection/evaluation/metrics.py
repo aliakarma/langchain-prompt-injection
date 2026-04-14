@@ -136,6 +136,15 @@ class ThresholdPoint:
 
 
 @dataclass
+class ThresholdSweepResult:
+    """Threshold sweep output for both plotting and threshold selection."""
+
+    points: list[ThresholdPoint] = field(default_factory=list)
+    best_f1_threshold: float = 0.5
+    recall_at_0_8_threshold: float | None = None
+
+
+@dataclass
 class MetricCI:
     """Bootstrap confidence interval for one metric."""
 
@@ -307,7 +316,7 @@ def threshold_sweep(
     y_true: list[int],
     y_scores: list[float],
     n_thresholds: int = 100,
-) -> list[ThresholdPoint]:
+) -> ThresholdSweepResult:
     """
     Sweep thresholds and return PR / ROC curve data.
 
@@ -322,9 +331,16 @@ def threshold_sweep(
 
     Returns
     -------
-    list[ThresholdPoint]
-        One point per threshold, sorted ascending by threshold.
+    ThresholdSweepResult
+        Sweep points plus:
+        - best_f1_threshold: threshold with max F1.
+        - recall_at_0_8_threshold: recall when threshold=0.8 (or nearest evaluated point).
     """
+    if len(y_true) != len(y_scores):
+        raise ValueError("y_true and y_scores must have the same length.")
+    if not y_scores:
+        return ThresholdSweepResult(points=[], best_f1_threshold=0.5, recall_at_0_8_threshold=None)
+
     min_score = min(y_scores)
     max_score = max(y_scores)
     step = (max_score - min_score) / max(n_thresholds - 1, 1)
@@ -348,7 +364,14 @@ def threshold_sweep(
             tp=cm.tp, fp=cm.fp, tn=cm.tn, fn=cm.fn,
         ))
 
-    return points
+    best = max(points, key=lambda p: (p.f1, p.recall, p.precision, -abs(p.threshold - 0.5)))
+    recall_pt = min(points, key=lambda p: abs(p.threshold - 0.8))
+
+    return ThresholdSweepResult(
+        points=points,
+        best_f1_threshold=round(best.threshold, 4),
+        recall_at_0_8_threshold=round(recall_pt.recall, 4),
+    )
 
 
 def _category_seed(seed: int, category: str) -> int:

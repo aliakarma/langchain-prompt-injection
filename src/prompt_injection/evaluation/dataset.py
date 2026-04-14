@@ -38,6 +38,11 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Iterator
 
+
+_DEFAULT_BENIGN_CORPUS_PATH = (
+    Path(__file__).resolve().parents[3] / "data" / "benign" / "benign_corpus_v2.jsonl"
+)
+
 # ---------------------------------------------------------------------------
 # Record dataclass
 # ---------------------------------------------------------------------------
@@ -435,6 +440,10 @@ class SyntheticDataset:
         self._records.extend(loaded)
         return self
 
+    def load_default_benign_corpus(self) -> "SyntheticDataset":
+        """Load the repository benign corpus from data/benign/benign_corpus_v2.jsonl."""
+        return self.load_from_path(_DEFAULT_BENIGN_CORPUS_PATH)
+
     def load_external_dataset(
         self,
         path: str | Path,
@@ -442,7 +451,7 @@ class SyntheticDataset:
         train_texts: set[str] | None = None,
     ) -> "SyntheticDataset":
         """
-        Load an external dataset (HackAPrompt/BIPIA/JSONL/CSV/JSON) and
+        Load an external dataset (JSONL/CSV/JSON) and
         normalize records to the canonical schema.
 
         Canonical schema fields:

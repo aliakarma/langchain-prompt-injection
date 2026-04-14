@@ -37,6 +37,7 @@ from prompt_injection.evaluation.dataset import SyntheticDataset, DataRecord
 from prompt_injection.evaluation.metrics import (
     MetricCI,
     MetricsReport,
+    ThresholdSweepResult,
     bootstrap_confidence_intervals,
     compute_false_positive_rate,
     compute_metrics,
@@ -152,6 +153,9 @@ class BenchmarkResult:
     confidence_intervals : dict[str, dict[str, MetricCI]]
     domain_shift : dict[str, dict[str, float]]
     failure_cases : dict[str, list[dict[str, str | float | int]]]
+    default_threshold_results : dict[str, MetricsReport]
+    optimized_threshold_results : dict[str, MetricsReport]
+    threshold_recommendations : dict[str, dict[str, float | None]]
     """
 
     config_a: ConfigResult
@@ -171,6 +175,9 @@ class BenchmarkResult:
     confidence_intervals: dict[str, dict[str, MetricCI]] = field(default_factory=dict)
     domain_shift: dict[str, dict[str, float]] = field(default_factory=dict)
     failure_cases: dict[str, list[dict[str, str | float | int]]] = field(default_factory=dict)
+    default_threshold_results: dict[str, MetricsReport] = field(default_factory=dict)
+    optimized_threshold_results: dict[str, MetricsReport] = field(default_factory=dict)
+    threshold_recommendations: dict[str, dict[str, float | None]] = field(default_factory=dict)
 
     def configs(self) -> list[ConfigResult]:
         return [self.config_a, self.config_b, self.config_c]
@@ -303,7 +310,7 @@ class BenchmarkRunner:
             Held-out synthetic evaluation slice used only as an in-distribution
             upper bound.
         external_eval_dataset : SyntheticDataset | None
-            Optional external benchmark split (e.g., HackAPrompt/BIPIA).
+            Optional external benchmark split.
         benign_dataset : SyntheticDataset | None
             Optional benign-only corpus used for realistic FPR estimation.
         """
@@ -337,7 +344,7 @@ class BenchmarkRunner:
         synthetic_per_category: dict[str, dict[str, MetricsReport]] = {}
         synthetic_sweeps: dict[str, list[ThresholdPoint]] = {}
         for name, det in [(self.CONFIG_NAMES["rules"], det_a), (self.CONFIG_NAMES["hybrid"], det_b), (self.CONFIG_NAMES["full"], det_c)]:
-            metrics, per_category, sweep = self._evaluate_dataset(
+            metrics, per_category, sweep, _ = self._evaluate_dataset(
                 det,
                 synthetic_records,
                 synthetic_texts,
@@ -352,9 +359,10 @@ class BenchmarkRunner:
         real_metrics: dict[str, MetricsReport] = {}
         real_per_category: dict[str, dict[str, MetricsReport]] = {}
         real_sweeps: dict[str, list[ThresholdPoint]] = {}
+        real_sweep_meta: dict[str, ThresholdSweepResult] = {}
         external_metrics: dict[str, MetricsReport] = {}
         for name, det in [(self.CONFIG_NAMES["rules"], det_a), (self.CONFIG_NAMES["hybrid"], det_b), (self.CONFIG_NAMES["full"], det_c)]:
-            metrics, per_category, sweep = self._evaluate_dataset(
+            metrics, per_category, sweep, sweep_meta = self._evaluate_dataset(
                 det,
                 primary_records,
                 primary_texts,
@@ -364,6 +372,7 @@ class BenchmarkRunner:
             real_metrics[name] = metrics
             real_per_category[name] = per_category
             real_sweeps[name] = sweep
+            real_sweep_meta[name] = sweep_meta
 
             if external_records:
                 ext_metrics, _, _ = self._evaluate_dataset(
@@ -478,6 +487,38 @@ class BenchmarkRunner:
 
         failure_cases = self._collect_failure_cases(det_c, primary_records)
 
+        default_threshold_results = dict(real_metrics)
+        optimized_threshold_results: dict[str, MetricsReport] = {}
+        threshold_recommendations: dict[str, dict[str, float | None]] = {}
+
+        for name, det in [
+            (self.CONFIG_NAMES["rules"], det_a),
+            (self.CONFIG_NAMES["hybrid"], det_b),
+            (self.CONFIG_NAMES["full"], det_c),
+        ]:
+            sweep_meta = real_sweep_meta.get(name)
+            if det.mode == "rules" or sweep_meta is None or not sweep_meta.points:
+                threshold_recommendations[name] = {
+                    "best_f1_threshold": self.threshold,
+                    "recall_at_0_8_threshold": None,
+                }
+                continue
+
+            best_thr = float(sweep_meta.best_f1_threshold)
+            _, y_scores_opt = self._predict(det, primary_texts)
+            y_pred_opt = [1 if s >= best_thr else 0 for s in y_scores_opt]
+            optimized_threshold_results[name] = compute_metrics(
+                primary_labels,
+                y_pred_opt,
+                y_scores_opt,
+                threshold=best_thr,
+                config_name=f"{name} [optimized]",
+            )
+            threshold_recommendations[name] = {
+                "best_f1_threshold": best_thr,
+                "recall_at_0_8_threshold": sweep_meta.recall_at_0_8_threshold,
+            }
+
         return BenchmarkResult(
             config_a=cfg_a,
             config_b=cfg_b,
@@ -496,6 +537,9 @@ class BenchmarkRunner:
             confidence_intervals=confidence_intervals,
             domain_shift=domain_shift,
             failure_cases=failure_cases,
+            default_threshold_results=default_threshold_results,
+            optimized_threshold_results=optimized_threshold_results,
+            threshold_recommendations=threshold_recommendations,
         )
 
     # ------------------------------------------------------------------
@@ -535,7 +579,7 @@ class BenchmarkRunner:
         labels: list[int],
         *,
         config_name: str,
-    ) -> tuple[MetricsReport, dict[str, MetricsReport], list[ThresholdPoint]]:
+    ) -> tuple[MetricsReport, dict[str, MetricsReport], list[ThresholdPoint], ThresholdSweepResult]:
         """Full evaluation for one detector configuration on one dataset."""
 
         # Predictions
@@ -554,9 +598,11 @@ class BenchmarkRunner:
 
         # Threshold sweep (B and C only)
         sweep: list[ThresholdPoint] = []
+        sweep_result = ThresholdSweepResult(points=[])
         if self.sweep_thresholds and detector.mode != "rules":
-            sweep = threshold_sweep(labels, y_scores)
-        return metrics, cat_metrics, sweep
+            sweep_result = threshold_sweep(labels, y_scores)
+            sweep = sweep_result.points
+        return metrics, cat_metrics, sweep, sweep_result
 
     def _evaluate_baseline(
         self,
