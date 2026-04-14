@@ -200,6 +200,48 @@ PATTERN_REGISTRY: list[PatternEntry] = [
         "pattern": _p(r"your\s+(new\s+)?(name|identity|role|persona)\s+is\s+\w+"),
         "description": "Identity/name reassignment",
     },
+    {
+        "id": "RH-006",
+        "category": "role_hijacking",
+        "severity": "medium",
+        "pattern": _p(r"pretend\s+you\s+are\s+(a|an|the)?\s*\w+"),
+        "description": "Explicit 'pretend you are' role hijack",
+    },
+    {
+        "id": "RH-007",
+        "category": "role_hijacking",
+        "severity": "medium",
+        "pattern": _p(r"\bact\s+as\b\s+(a|an|the)?\s*\w+"),
+        "description": "Explicit 'act as' role hijack",
+    },
+    {
+        "id": "RH-008",
+        "category": "role_hijacking",
+        "severity": "medium",
+        "pattern": _p(r"imagine\s+you\s+are\s+(a|an|the)?\s*\w+"),
+        "description": "Imagined persona role hijack",
+    },
+    {
+        "id": "RH-009",
+        "category": "role_hijacking",
+        "severity": "high",
+        "pattern": _p(r"from\s+now\s+on\s+you\s+are\s+(a|an|the)?\s*\w+"),
+        "description": "Persistent role assignment from now on",
+    },
+    {
+        "id": "RH-010",
+        "category": "role_hijacking",
+        "severity": "high",
+        "pattern": _p(r"you\s+have\s+no\s+restrictions?"),
+        "description": "No-restrictions persona framing",
+    },
+    {
+        "id": "RH-011",
+        "category": "role_hijacking",
+        "severity": "medium",
+        "pattern": _p(r"your\s+true\s+self"),
+        "description": "'your true self' persona invocation",
+    },
 
     # ── Category 4: DAN / Jailbreak ────────────────────────────────────────
     {
@@ -354,8 +396,8 @@ PATTERN_REGISTRY: list[PatternEntry] = [
         "id": "EVA-001",
         "category": "evasion",
         "severity": "medium",
-        "pattern": _p(r"(i\s*g\s*n\s*o\s*r\s*e|d\s*i\s*s\s*r\s*e\s*g\s*a\s*r\s*d)\s+(p\s*r\s*e\s*v\s*i\s*o\s*u\s*s)"),
-        "description": "Letter-spaced evasion of 'ignore previous'",
+        "pattern": _p(r"(?:\bi\W*g\W*n\W*o\W*r\W*e\b|\bd\W*i\W*s\W*r\W*e\W*g\W*a\W*r\W*d\b).{0,30}(?:\bp\W*r\W*e\W*v\W*i\W*o\W*u\W*s\b|\binstructions?\b)"),
+        "description": "Letter-spaced or punctuated evasion near override intent",
     },
     {
         "id": "EVA-002",
@@ -368,8 +410,8 @@ PATTERN_REGISTRY: list[PatternEntry] = [
         "id": "EVA-003",
         "category": "evasion",
         "severity": "low",
-        "pattern": _p(r"(\bingnore\b|\bignroe\b|\bdisreguard\b|\bignor3\b|\b1gnore\b)"),
-        "description": "Common typo/homoglyph variants of 'ignore'",
+        "pattern": _p(r"(\bingnore\b|\bignroe\b|\bdisreguard\b|\bignor3\b|\b1gnore\b|\bi9nore\b|\big[nm]0re\b)"),
+        "description": "Common typo and partial-obfuscation variants of override keywords",
     },
 ]
 
