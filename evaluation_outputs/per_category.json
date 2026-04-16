@@ -1,22 +1,22 @@
 {
   "model": "Config C: Full",
-  "threshold": 0.3772,
+  "threshold": 0.3105,
   "recall_by_category": {
     "instruction_override": {
-      "n": 53,
-      "recall": 0.9622641509433962
+      "n": 7757,
+      "recall": 1.0
     },
     "role_hijacking": {
-      "n": 1,
+      "n": 223,
       "recall": 1.0
     },
     "obfuscation": {
-      "n": 0,
-      "recall": 0.0
+      "n": 35,
+      "recall": 1.0
     },
     "social_engineering": {
-      "n": 21,
-      "recall": 0.8571428571428571
+      "n": 2060,
+      "recall": 0.9966019417475728
     }
   }
 }

@@ -7,9 +7,9 @@
 
 ## Executive Summary
 
-Total Dataset: **1,000** samples
-- Injections: 500 (50.0%)
-- Benign (real): 500 (50.0%)
+Total Dataset: **67,663** samples
+- Injections: 67,163 (99.3%)
+- Benign (real): 500 (0.7%)
 
 Dataset balance significantly improved from prior 96% imbalance.
 
@@ -18,21 +18,21 @@ Dataset balance significantly improved from prior 96% imbalance.
 ## Key Findings
 
 ### Dataset Composition
-- Training: 700 samples
-- Validation: 150 samples
-- Test: 150 samples
+- Training: 47,364 samples
+- Validation: 10,149 samples
+- Test: 10,150 samples
 
 ### Evaluation Results (Test Set)
 
 | Config | Precision | Recall | F1 | AUC |
 |--------|-----------|--------|-----|-----|
-| Config A | 1.000 | 0.227 | 0.370 | 0.613 |
-| Config B | 1.000 | 0.093 | 0.171 | 0.860 |
-| Config C | 1.000 | 0.227 | 0.370 | 1.000 |
+| Config A | 1.000 | 0.250 | 0.400 | 0.625 |
+| Config B | 1.000 | 0.063 | 0.119 | 0.790 |
+| Config C | 1.000 | 0.253 | 0.403 | 1.000 |
 
 ### Error Analysis
 - False Positives: 0
-- False Negatives: 58
+- False Negatives: 7,530
 
 ### Assessment
 
