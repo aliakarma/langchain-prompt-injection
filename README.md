@@ -434,47 +434,34 @@ guard = PromptInjectionMiddleware(trusted_roles=["system", "developer", "admin"]
 
 ## 📊 Results
 
-### Primary (Real-world / OOD)
+### Evaluation Design & Methodology
 
-> Use this table as the reportable primary result. These numbers come from the optimized operating point on held-out real-world data and were selected under a false-positive constraint.
+Our evaluation pipeline is strictly designed to prevent threshold leakage and overclaiming. Datasets are separated into **Train (70%)**, **Validation (15%)**, and **Test (15%)** splits using stratified sampling.
 
-#### Primary Result (Optimized Operating Point)
+- **Primary Metric**: Evaluated using the default probability threshold (`0.50`).
+- **Calibrated Metrics**: Evaluated using optimal and false-positive constrained thresholds. **Crucially, threshold selection occurs ONLY on the Validation set.** The held-out Test set is used ONLY for final reporting.
 
-| Config        | Threshold | Precision | Recall | F1    | FPR   |
-| ------------- | --------- | --------- | ------ | ----- | ----- |
-| C (optimized) | 0.025     | 0.910     | 1.000  | 0.952 | 0.096 |
+### Canonical Results (Held-Out Test Set)
 
-Threshold selected under the constraint `FPR <= 0.10`, maximizing recall in the deployment setting.
+The following tables present the performance of our detectors on the final 15% held-out test split, ensuring no threshold tuning data leaks into the final evaluation. We evaluate both the formal Logistic Regression (Config C) and a Semantic Baseline (`all-MiniLM-L6-v2`).
 
-#### Default vs Optimized
+> **NOTE:** Semantic baseline models may achieve near-perfect performance (F1 ~1.0) on the minimal `data/sample` dataset due to the very small test size (N=8). These specific sample results are used for offline smoke-testing only and are NOT representative of real-world, large-scale performance.
 
-| Mode      | Threshold | Recall | F1   |
-| --------- | --------- | ------ | ---- |
-| Default   | 0.50      | ~0.06  | ~0.11 |
-| Optimized | 0.025     | 1.00   | 0.95  |
+#### 1) Configuration C (Logistic Regression Scorer)
 
-Performance is highly sensitive to threshold selection. Default thresholds severely underestimate model capability, while calibrated thresholds under operational constraints yield near-perfect recall with acceptable false positive rates.
+| Metric Type | Threshold Source | Precision | Recall | F1 |
+|-------------|------------------|-----------|--------|----|
+| **Primary Metric** | Default (`0.50`) | 0.600 | 0.750 | 0.667 |
+| **Calibrated** | Validation Optimal | 1.000 | 0.750 | 0.857 |
+| **Calibrated** | Validation FPR ≤ 0.05| 1.000 | 0.500 | 0.667 |
 
-This is a deployment-oriented operating point, not a claim of a perfect system.
+#### 2) Semantic Baseline (`sentence-transformers`)
 
-### Synthetic (Upper bound)
-
-Synthetic results represent upper-bound performance and should not be used as primary metric.
-
-> Use this table for debugging and sanity checks only. Synthetic data is template-driven and easier to separate than real-world text. These numbers should not be presented as the main result.
-
-| Config | Precision | Recall | F1 | AUC |
-|--------|----------:|-------:|---:|----:|
-| A | 1.0000 | 0.6800 | 0.8095 | 0.8400 |
-| B | 1.0000 | 0.6200 | 0.7654 | 0.9678 |
-| C | 1.0000 | 0.6800 | 0.8095 | 0.9907 |
-
-### Why the Gap Exists
-
-The synthetic set is template-driven and easier to separate. Real-world prompts include quotes, context, paraphrases, and mixed intent, which reduces recall and increases calibration difficulty. The external stress test is harder still because it includes more diverse phrasing and cross-domain formatting.
-
-AUC values on small datasets should be interpreted with caution.
-
+| Metric Type | Threshold Source | Precision | Recall | F1 |
+|-------------|------------------|-----------|--------|----|
+| **Primary Metric** | Default (`0.50`) | 1.000 | 1.000 | 1.000 |
+| **Calibrated** | Validation Optimal | 1.000 | 1.000 | 1.000 |
+| **Calibrated** | Validation FPR ≤ 0.05| 1.000 | 1.000 | 1.000 |
 
 ### Real-Data Evaluation
 
