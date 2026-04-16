@@ -11,6 +11,7 @@ This version:
 [OK] Generates honest work-in-progress report
 """
 
+import argparse
 import json
 import logging
 import random
@@ -25,8 +26,16 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
-from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.metrics import (
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+)
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 
 from src.prompt_injection.detector import InjectionDetector, LogisticRegressionScorer
 from src.prompt_injection.evaluation.metrics import compute_metrics
@@ -47,6 +56,8 @@ REAL_INJECTIONS_FILE = Path("data/real/injections_real_v4.jsonl")
 SAMPLE_INJECTIONS_FILE = Path("data/sample/injections.jsonl")
 OUTPUT_ROOT = Path("evaluation_outputs")
 TRAIN_SIZE, VAL_SIZE, TEST_SIZE = 0.70, 0.15, 0.15
+MINIMAL_MODE = "minimal"
+FULL_MODE = "full"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s")
 logger = logging.getLogger(__name__)
