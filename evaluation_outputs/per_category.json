@@ -2,29 +2,29 @@
   "datasets": {
     "full": {
       "model": "Config C: Full",
-      "threshold": 0.1069,
+      "threshold": 0.1892,
       "recall_by_category": {
         "instruction_override": {
-          "n": 2146,
+          "n": 534,
           "recall": 1.0
         },
         "role_hijacking": {
-          "n": 55,
+          "n": 21,
           "recall": 1.0
         },
         "obfuscation": {
-          "n": 10,
+          "n": 1,
           "recall": 1.0
         },
         "social_engineering": {
-          "n": 540,
-          "recall": 0.9981481481481481
+          "n": 131,
+          "recall": 1.0
         }
       }
     },
     "balanced": {
       "model": "Config C: Full",
-      "threshold": 0.377,
+      "threshold": 0.3795,
       "recall_by_category": {
         "instruction_override": {
           "n": 575,
@@ -40,7 +40,7 @@
         },
         "social_engineering": {
           "n": 164,
-          "recall": 0.9817073170731707
+          "recall": 0.9878048780487805
         }
       }
     }

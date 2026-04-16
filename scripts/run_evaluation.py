@@ -62,6 +62,7 @@ MINIMAL_MODE = "minimal"
 FULL_MODE = "full"
 MIN_BENIGN_SIZE = 5000
 DEFAULT_FULL_MAX_SAMPLES = 20000
+LENGTH_NORMALIZATION_TOKENS = 200
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -374,6 +375,13 @@ def _canonical_text(text: str) -> str:
 
 def _tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _truncate_to_tokens(text: str, max_tokens: int) -> str:
+    parts = text.split()
+    if len(parts) <= max_tokens:
+        return text
+    return " ".join(parts[:max_tokens])
 
 
 def _cap_records(records: list[ExternalRawRecord], max_samples: int) -> tuple[list[ExternalRawRecord], dict[str, Any]]:
@@ -1075,6 +1083,7 @@ def _build_results_payload(
             "confidence_intervals": ci,
             "dataset_difficulty": item["dataset_difficulty"],
             "robustness": item["robustness"],
+            "length_normalized": item["length_normalized"],
             "metrics": {},
         }
         thresholds_payload["datasets"][dataset_name] = {}
@@ -1224,6 +1233,29 @@ def phase8_report(results_payload: dict[str, Any]) -> str:
                 )
 
     lines.append("")
+    lines.append("## Length Normalization Experiment")
+    lines.append("")
+    lines.append(
+        f"All samples were truncated to the first {LENGTH_NORMALIZATION_TOKENS} whitespace-delimited tokens and re-evaluated."
+    )
+    lines.append("")
+    lines.append("| Dataset | Model | Original F1@0.5 | Length-Normalized F1@0.5 | Delta (Norm - Orig) |")
+    lines.append("|---|---|---:|---:|---:|")
+    for dataset_name, block in results_payload["datasets"].items():
+        for model_name, norm_metrics in block["length_normalized"].items():
+            orig = block["metrics"][model_name]["test_default_0_5"]
+            lines.append(
+                f"| {dataset_name} | {model_name} | {orig['f1']:.3f} | {norm_metrics['test_default_0_5']['f1']:.3f} | {norm_metrics['f1_delta_vs_original']:.3f} |"
+            )
+
+    lines.append("")
+    lines.append("### Impact Interpretation")
+    lines.append(
+        "Large negative deltas after truncation suggest reliance on long-context lexical cues or text-length artifacts; "
+        "small deltas indicate stronger dependence on local, shorter-span signals."
+    )
+
+    lines.append("")
     lines.append("## Realism Warnings")
     lines.append("- Dataset limitations: current corpora are mostly English and 2023-2024 attack styles.")
     lines.append("- Potential over-separability: lexical overlap and token divergence can make some splits easier than production data.")
@@ -1285,6 +1317,26 @@ def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str, sampling_me
                 "f1_drop_vs_primary": float(base_f1 - m["f1"]),
             }
 
+    # Length normalization experiment: fixed-token truncation to test dependence on long-context/superficial length cues.
+    val_trunc_texts = [_truncate_to_tokens(t, LENGTH_NORMALIZATION_TOKENS) for t in phase3.validation.texts()]
+    test_trunc_texts = [_truncate_to_tokens(t, LENGTH_NORMALIZATION_TOKENS) for t in phase3.test.texts()]
+    val_trunc_scores = _model_scores_for_texts(val_trunc_texts, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+    test_trunc_scores = _model_scores_for_texts(test_trunc_texts, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+
+    length_normalized: dict[str, Any] = {}
+    y_true_val = phase3.validation.labels()
+    for model_name in primary_test.keys():
+        val_m = _metrics_at_threshold(y_true_val, val_trunc_scores[model_name], 0.5, model_name)
+        test_m = _metrics_at_threshold(y_true_test, test_trunc_scores[model_name], 0.5, model_name)
+        length_normalized[model_name] = {
+            "tokens": LENGTH_NORMALIZATION_TOKENS,
+            "validation_default_0_5": val_m,
+            "test_default_0_5": test_m,
+            "f1_delta_vs_original": float(test_m["f1"] - primary_test[model_name]["f1"]),
+            "recall_delta_vs_original": float(test_m["r"] - primary_test[model_name]["r"]),
+            "precision_delta_vs_original": float(test_m["p"] - primary_test[model_name]["p"]),
+        }
+
     threshold_sweep_payload = {
         model_name: build_threshold_sweep(phase3.test.labels(), scores)
         for model_name, scores in test_scores_by_model.items()
@@ -1326,6 +1378,7 @@ def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str, sampling_me
         "ci": confidence_intervals,
         "dataset_difficulty": dataset_difficulty,
         "robustness": robustness,
+        "length_normalized": length_normalized,
         "sampling": sampling_meta,
     }
 
