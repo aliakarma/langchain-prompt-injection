@@ -270,9 +270,10 @@ class Phase2Result:
 
 
 def _canonical_for_merge(text: str) -> str:
-    text = text.lower()
+    text = text.lower().strip()
     text = re.sub(r"\s+", " ", text)
-    return text.strip()
+    text = re.sub(r"[^a-z0-9 ]+", "", text)
+    return text
 
 def phase2_merge(
     injection_records: list[ExternalRawRecord],
