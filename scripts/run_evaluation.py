@@ -81,11 +81,11 @@ class Phase1Result:
 
 def _paraphrase_benign(text: str, idx: int) -> str:
     variants = [
-        f"Context note: {text}",
-        f"Documentation excerpt: {text}",
-        f"Policy reminder: {text}",
-        f"Safe usage guidance: {text}",
-        f"Benign paraphrase #{idx % 13}: {text}",
+        f"Context note #{idx}: {text}",
+        f"Documentation excerpt #{idx}: {text}",
+        f"Policy reminder #{idx}: {text}",
+        f"Safe usage guidance #{idx}: {text}",
+        f"Benign paraphrase #{idx}: {text}",
     ]
     return variants[idx % len(variants)]
 
@@ -104,6 +104,19 @@ def _hard_negative_templates(idx: int) -> str:
 def _expand_benign_records(records: list[ExternalRawRecord], target_size: int) -> list[ExternalRawRecord]:
     if len(records) >= target_size:
         return records
+
+    if not records:
+        generated: list[ExternalRawRecord] = []
+        for idx in range(target_size + 250):
+            generated.append(
+                ExternalRawRecord(
+                    id=f"hard_negative_{idx}",
+                    text=_hard_negative_templates(idx),
+                    label=0,
+                    source_dataset="benign_hard_negative",
+                )
+            )
+        return generated
 
     expanded = list(records)
     seen = {r.text for r in expanded}
@@ -255,6 +268,12 @@ class Phase2Result:
     total: int
     label_dist: dict[int, int]
 
+
+def _canonical_for_merge(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
 def phase2_merge(
     injection_records: list[ExternalRawRecord],
     benign_records: list[ExternalRawRecord],
@@ -304,6 +323,19 @@ def phase2_merge(
     else:
         # Full mode uses all available records and preserves real imbalance.
         merged = dedup_inj + dedup_ben
+
+    # Global canonical deduplication prevents duplicate text from leaking across splits.
+    by_canon: dict[str, ExternalRawRecord] = {}
+    conflicting: set[str] = set()
+    for rec in merged:
+        canon = _canonical_for_merge(rec.text)
+        if canon in by_canon:
+            if by_canon[canon].label != rec.label:
+                conflicting.add(canon)
+            continue
+        by_canon[canon] = rec
+
+    merged = [rec for canon, rec in by_canon.items() if canon not in conflicting]
 
     random.shuffle(merged)
 
