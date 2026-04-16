@@ -1,6 +1,6 @@
 # Prompt Injection Defense Framework
 
-> Production-ready prompt-injection detection middleware for LangChain — three detection configurations, a full evaluation suite, a formal threat model, and reproducible notebooks.
+> Prompt-injection detection and evaluation framework for LangChain — three detection configurations, a full evaluation suite, a formal threat model, and reproducible notebooks.
 
 ---
 
@@ -33,7 +33,7 @@
 
 Prompt-injection attacks occur when untrusted content — user input, retrieved documents, or tool outputs — attempts to override a language model's intended behavior. This repository provides a **drop-in `AgentMiddleware` for LangChain** that intercepts all execution hooks and enforces configurable detection and policy logic before content reaches the LLM.
 
-The framework supports three detection configurations (rules-only, hybrid, and full ML) and four policy strategies (allow, annotate, redact, block), making it suitable for use cases ranging from passive monitoring to hard production blocking.
+The framework supports three detection configurations (rules-only, hybrid, and full ML) and four policy strategies (allow, annotate, redact, block), making it suitable for use cases ranging from passive monitoring to strict policy enforcement and evaluation studies.
 
 > ⚠️ **Research note:** Performance on unseen, out-of-distribution prompts is materially lower than synthetic in-distribution performance. Always treat real-world evaluation results as primary and synthetic metrics as an upper-bound diagnostic only.
 
@@ -182,9 +182,14 @@ python scripts/run_evaluation.py --mode full
 # Minimal Offline Benchmark (Smoke Test)
 python scripts/run_evaluation.py --mode minimal
 
-# Full Benchmark (Requires Internet; requires Git Bash or WSL for the download script)
-bash scripts/download_datasets.sh
+# Full Benchmark (runs end-to-end with currently available local datasets)
 python scripts/run_evaluation.py --mode full
+```
+
+Optional dataset refresh (if Git Bash or WSL is available):
+
+```powershell
+bash scripts/download_datasets.sh
 ```
 
 > *Note: `make benchmark` and `make benchmark-full` are also available as optional shorthand aliases.*
@@ -230,9 +235,9 @@ make demo-rag
 **Windows PowerShell:**
 
 ```powershell
-make demo-block
-make demo-annotate
-make demo-rag
+python demo/demo_block.py
+python demo/demo_annotate.py
+python demo/demo_rag_pipeline.py
 ```
 
 ### Step 4 — Run the test suite
@@ -246,7 +251,7 @@ make test
 **Windows PowerShell:**
 
 ```powershell
-make test
+python -m pytest
 ```
 
 ### Step 5 — Run the evaluation pipeline
@@ -263,7 +268,7 @@ python scripts/run_evaluation.py --mode minimal
 python scripts/run_evaluation.py --mode minimal
 ```
 
-To run the full evaluation spanning external datasets:
+To run the full evaluation spanning full + balanced variants:
 
 **Linux / macOS:**
 ```bash
@@ -273,9 +278,13 @@ python scripts/run_evaluation.py --mode full
 
 **Windows PowerShell:**
 ```powershell
-# Requires Git Bash or WSL for the bash download script
-bash scripts/download_datasets.sh
 python scripts/run_evaluation.py --mode full
+```
+
+Optional dataset refresh (if Git Bash or WSL is available):
+
+```powershell
+bash scripts/download_datasets.sh
 ```
 
 Expected output artifacts:
@@ -336,7 +345,7 @@ Three configurations are available, trading latency for detection sophistication
 |--------|------|------------|---------|----------|
 | **A** | `"rules"` | Regex patterns only | < 1 ms | High-throughput, latency-critical |
 | **B** | `"hybrid"` | Regex + heuristic scoring | < 2 ms | **Recommended default** |
-| **C** | `"full"` | Regex + scoring + ML classifier | 3–8 ms | Maximum F1, offline/async pipelines |
+| **C** | `"full"` | Regex + scoring + ML classifier | 3–8 ms | Analysis-heavy evaluations and threshold-tuning studies |
 
 ```python
 from prompt_injection import PromptInjectionMiddleware
@@ -441,32 +450,92 @@ Our evaluation pipeline is strictly designed to prevent threshold leakage and ov
 - **Primary Metric**: Evaluated using the default probability threshold (`0.50`).
 - **Calibrated Metrics**: Evaluated using optimal and false-positive constrained thresholds. **Crucially, threshold selection occurs ONLY on the Validation set.** The held-out Test set is used ONLY for final reporting.
 
+### Executive Summary
+
+- Default operating-point performance is modest for the rule/heuristic/classifier stack (typical F1 at threshold 0.50 is in the ~0.36-0.40 range for Config A/C).
+- Much higher F1 is achievable after validation-only threshold calibration, but this comes with operating-point tradeoffs and should be interpreted separately from default behavior.
+- Precision-recall tradeoffs are strong and dataset-dependent; the same detector behaves differently on balanced and full (realistically imbalanced) variants.
+
 ### Canonical Results (Held-Out Test Set)
 
-The following tables present the performance of our detectors on the final 15% held-out test split, ensuring no threshold tuning data leaks into the final evaluation. We evaluate both the formal Logistic Regression (Config C) and a Semantic Baseline (`all-MiniLM-L6-v2`).
+The following tables report held-out test metrics from `evaluation_outputs/results.json` with strict separation between default-threshold and validation-calibrated evaluation.
 
-> **NOTE:** Semantic baseline models may achieve near-perfect performance (F1 ~1.0) on the minimal `data/sample` dataset due to the very small test size (N=8). These specific sample results are used for offline smoke-testing only and are NOT representative of real-world, large-scale performance.
+#### 1) Balanced Dataset (~50/50)
 
-#### 1) Configuration C (Logistic Regression Scorer)
+**Configuration C (Logistic Regression Scorer)**
 
-| Metric Type | Threshold Source | Precision | Recall | F1 |
-|-------------|------------------|-----------|--------|----|
-| **Primary Metric** | Default (`0.50`) | 0.600 | 0.750 | 0.667 |
-| **Calibrated** | Validation Optimal | 1.000 | 0.750 | 0.857 |
-| **Calibrated** | Validation FPR ≤ 0.05| 1.000 | 0.500 | 0.667 |
+| Metric Type | Threshold Source | Precision | Recall | F1 | ROC-AUC |
+|-------------|------------------|-----------|--------|----|---------|
+| **Primary Metric** | Default (`0.50`) | 1.0000 | 0.2304 | 0.3745 | 0.9888 |
+| **Calibrated** | Validation Optimal | 0.9794 | 0.9974 | 0.9883 | 0.9888 |
+| **Calibrated** | Validation FPR ≤ 0.05 | 0.9670 | 0.9987 | 0.9826 | 0.9888 |
 
-#### 2) Semantic Baseline (`sentence-transformers`)
+**Semantic Baseline**
 
-| Metric Type | Threshold Source | Precision | Recall | F1 |
-|-------------|------------------|-----------|--------|----|
-| **Primary Metric** | Default (`0.50`) | 1.000 | 1.000 | 1.000 |
-| **Calibrated** | Validation Optimal | 1.000 | 1.000 | 1.000 |
-| **Calibrated** | Validation FPR ≤ 0.05| 1.000 | 1.000 | 1.000 |
+| Metric Type | Threshold Source | Precision | Recall | F1 | ROC-AUC |
+|-------------|------------------|-----------|--------|----|---------|
+| **Primary Metric** | Default (`0.50`) | 1.0000 | 0.9987 | 0.9993 | 1.0000 |
+| **Calibrated** | Validation Optimal | 1.0000 | 0.9987 | 0.9993 | 1.0000 |
+| **Calibrated** | Validation FPR ≤ 0.05 | 0.9610 | 1.0000 | 0.9801 | 1.0000 |
+
+#### 2) Full Dataset (Realistic Imbalance)
+
+**Configuration C (Logistic Regression Scorer)**
+
+| Metric Type | Threshold Source | Precision | Recall | F1 | ROC-AUC |
+|-------------|------------------|-----------|--------|----|---------|
+| **Primary Metric** | Default (`0.50`) | 0.9750 | 0.2271 | 0.3684 | 0.9359 |
+| **Calibrated** | Validation Optimal | 0.9885 | 1.0000 | 0.9942 | 0.9359 |
+| **Calibrated** | Validation FPR ≤ 0.05 | 0.9857 | 1.0000 | 0.9928 | 0.9359 |
+
+**Semantic Baseline**
+
+| Metric Type | Threshold Source | Precision | Recall | F1 | ROC-AUC |
+|-------------|------------------|-----------|--------|----|---------|
+| **Primary Metric** | Default (`0.50`) | 1.0000 | 0.9985 | 0.9993 | 1.0000 |
+| **Calibrated** | Validation Optimal | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| **Calibrated** | Validation FPR ≤ 0.05 | 0.9885 | 1.0000 | 0.9942 | 1.0000 |
+
+### Key Findings
+
+- At the default threshold (`0.50`), Config A/C are precision-heavy with comparatively low recall, yielding modest F1.
+- Validation-only threshold tuning substantially improves F1 and recall for Config C on both dataset variants.
+- Balanced and full variants produce materially different operating characteristics; reporting both is necessary to avoid overclaiming.
+
+### Dataset Analysis
+
+- Injection prompts are much longer than benign prompts (e.g., full split: ~321 vs ~26 tokens on average).
+- Vocabulary overlap is low (Jaccard ~0.10 on both full and balanced variants).
+- Token-distribution divergence is high (JS divergence ~0.34-0.36).
+
+These signals indicate the dataset is structurally separable, so very high scores may partially reflect distribution artifacts rather than robust semantic understanding.
+
+### Length Normalization Experiment
+
+All samples were truncated to the first 200 whitespace-delimited tokens and re-evaluated.
+
+- Full dataset: Config C F1 changed from 0.3684 to 0.3626 (delta -0.0058).
+- Balanced dataset: Config C F1 changed from 0.3745 to 0.3745 (delta 0.0000).
+- Across models, F1 shifts are small (typically near zero to a few thousandths).
+
+Interpretation: detection behavior is not primarily driven by absolute text length in this setup.
+
+### Robustness Findings
+
+- Under text shuffling, Config C and no-semantic variants collapse to very low F1 (~0.056-0.059), while the semantic baseline remains near 0.999.
+- Under slight perturbation, primary-model F1 remains close to baseline.
+
+Interpretation: strong baseline performance appears to rely heavily on shallow statistical cues in this benchmark, and robustness to structure-preserving perturbations remains limited for non-baseline detectors.
 
 ### Real-Data Evaluation
 
-Datasets used: HackAPrompt, prompt-injections, jailbreak, Wikipedia (benign), and SQuAD (benign).
-Final dataset composition: 41,864 total samples, with 20,522 injections (~49%) and 21,342 benign samples (~51%).
+The benchmark reports both a balanced dataset (~50/50) and a full dataset with realistic class imbalance. Claims should be based on held-out test metrics and explicitly distinguish default-threshold vs validation-calibrated operation.
+
+### Limitations
+
+- The dataset appears structurally separable (length, overlap, and token-distribution signals), which can inflate benchmark performance.
+- The semantic baseline likely benefits from dataset artifacts and should not be treated as evidence of production-grade semantic robustness.
+- Real-world performance on unseen traffic is expected to be lower than in-benchmark calibrated scores.
 
 ### Benchmark Artifacts
 
@@ -689,6 +758,17 @@ make notebooks     # Launch Jupyter in notebooks/
 make demo-block    # Block strategy — 10 attack/benign cases with outcomes
 make demo-annotate # Annotate strategy — risk scores and metadata
 make demo-rag      # RAG pipeline — 12 mixed clean/injected chunks
+```
+
+### PowerShell-Native Equivalents
+
+```powershell
+python -m pytest
+python scripts/run_evaluation.py
+python scripts/run_evaluation.py --mode full
+python demo/demo_block.py
+python demo/demo_annotate.py
+python demo/demo_rag_pipeline.py
 ```
 
 ### Additional Commands
