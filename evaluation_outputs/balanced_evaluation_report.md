@@ -45,11 +45,11 @@
 | full | Config C: Full | 0.371 | 0.998 | 0.999 | 0.395 | 0.995 | 0.999 |
 | full | Semantic Baseline | 0.999 | 1.000 | 0.997 | 1.000 | 1.000 | 1.000 |
 | balanced | Ablation: No Normalization | 0.999 | 0.999 | 0.981 | 0.999 | 1.000 | 1.000 |
-| balanced | Ablation: No Semantic Model | 0.374 | 0.988 | 0.983 | 0.841 | 0.989 | 0.981 |
+| balanced | Ablation: No Semantic Model | 0.374 | 0.988 | 0.983 | 0.838 | 0.989 | 0.981 |
 | balanced | Config A: Rules | 0.362 | 0.362 | 0.362 | 0.362 | 0.599 | 0.580 |
 | balanced | Config B: Hybrid | 0.099 | 0.721 | 0.412 | 0.063 | 0.753 | 0.708 |
-| balanced | Config C: Full | 0.374 | 0.988 | 0.983 | 0.841 | 0.989 | 0.981 |
-| balanced | Semantic Baseline | 0.999 | 0.999 | 0.980 | 0.999 | 1.000 | 1.000 |
+| balanced | Config C: Full | 0.374 | 0.988 | 0.983 | 0.838 | 0.989 | 0.981 |
+| balanced | Semantic Baseline | 0.999 | 0.999 | 0.981 | 0.999 | 1.000 | 1.000 |
 
 ## Performance Comparison (Primary Threshold)
 
@@ -72,30 +72,30 @@
 
 | Dataset | Model | Scenario | F1 | F1 Drop vs Primary |
 |---|---|---|---:|---:|
-| full | Config A: Rules | shuffled_text | 0.066 | 0.300 |
-| full | Config A: Rules | slight_perturbation | 0.366 | -0.000 |
-| full | Semantic Baseline | shuffled_text | 0.998 | 0.001 |
-| full | Semantic Baseline | slight_perturbation | 0.999 | 0.000 |
-| full | Ablation: No Normalization | shuffled_text | 0.999 | -0.000 |
-| full | Ablation: No Normalization | slight_perturbation | 0.999 | 0.000 |
-| full | Config C: Full | shuffled_text | 0.072 | 0.299 |
-| full | Config C: Full | slight_perturbation | 0.371 | 0.000 |
-| full | Ablation: No Semantic Model | shuffled_text | 0.072 | 0.299 |
-| full | Ablation: No Semantic Model | slight_perturbation | 0.371 | 0.000 |
 | full | Config B: Hybrid | shuffled_text | 0.049 | 0.076 |
 | full | Config B: Hybrid | slight_perturbation | 0.125 | -0.000 |
-| balanced | Config A: Rules | shuffled_text | 0.053 | 0.308 |
-| balanced | Config A: Rules | slight_perturbation | 0.363 | -0.002 |
-| balanced | Semantic Baseline | shuffled_text | 0.999 | 0.000 |
-| balanced | Semantic Baseline | slight_perturbation | 0.999 | 0.000 |
-| balanced | Ablation: No Normalization | shuffled_text | 0.999 | 0.000 |
-| balanced | Ablation: No Normalization | slight_perturbation | 0.999 | 0.000 |
-| balanced | Config C: Full | shuffled_text | 0.056 | 0.319 |
-| balanced | Config C: Full | slight_perturbation | 0.374 | 0.000 |
-| balanced | Ablation: No Semantic Model | shuffled_text | 0.056 | 0.319 |
-| balanced | Ablation: No Semantic Model | slight_perturbation | 0.374 | 0.000 |
+| full | Config A: Rules | shuffled_text | 0.066 | 0.300 |
+| full | Config A: Rules | slight_perturbation | 0.366 | -0.000 |
+| full | Ablation: No Semantic Model | shuffled_text | 0.072 | 0.299 |
+| full | Ablation: No Semantic Model | slight_perturbation | 0.371 | 0.000 |
+| full | Semantic Baseline | shuffled_text | 0.998 | 0.001 |
+| full | Semantic Baseline | slight_perturbation | 0.999 | 0.000 |
+| full | Config C: Full | shuffled_text | 0.072 | 0.299 |
+| full | Config C: Full | slight_perturbation | 0.371 | 0.000 |
+| full | Ablation: No Normalization | shuffled_text | 0.999 | -0.000 |
+| full | Ablation: No Normalization | slight_perturbation | 0.999 | 0.000 |
 | balanced | Config B: Hybrid | shuffled_text | 0.036 | 0.063 |
 | balanced | Config B: Hybrid | slight_perturbation | 0.099 | -0.001 |
+| balanced | Config A: Rules | shuffled_text | 0.053 | 0.308 |
+| balanced | Config A: Rules | slight_perturbation | 0.363 | -0.002 |
+| balanced | Ablation: No Semantic Model | shuffled_text | 0.056 | 0.319 |
+| balanced | Ablation: No Semantic Model | slight_perturbation | 0.374 | 0.000 |
+| balanced | Semantic Baseline | shuffled_text | 0.999 | 0.000 |
+| balanced | Semantic Baseline | slight_perturbation | 0.999 | 0.000 |
+| balanced | Config C: Full | shuffled_text | 0.056 | 0.319 |
+| balanced | Config C: Full | slight_perturbation | 0.374 | 0.000 |
+| balanced | Ablation: No Normalization | shuffled_text | 0.999 | 0.000 |
+| balanced | Ablation: No Normalization | slight_perturbation | 0.999 | 0.000 |
 
 ## Realism Warnings
 - Dataset limitations: current corpora are mostly English and 2023-2024 attack styles.

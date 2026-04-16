@@ -24,7 +24,7 @@
     },
     "balanced": {
       "model": "Config C: Full",
-      "threshold": 0.3795,
+      "threshold": 0.377,
       "recall_by_category": {
         "instruction_override": {
           "n": 575,
@@ -40,7 +40,7 @@
         },
         "social_engineering": {
           "n": 164,
-          "recall": 0.9878048780487805
+          "recall": 0.9817073170731707
         }
       }
     }
