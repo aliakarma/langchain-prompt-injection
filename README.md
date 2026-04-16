@@ -470,10 +470,10 @@ Final dataset composition: 41,864 total samples, with 20,522 injections (~49%) a
 
 ### Benchmark Artifacts
 
-```
-reports/benchmark.json
-reports/benchmark.csv
-reports/category_breakdown.csv
+```text
+evaluation_outputs/results.json
+evaluation_outputs/thresholds.json
+evaluation_outputs/per_category.json
 ```
 
 ---
@@ -523,8 +523,8 @@ Evaluation is structured to avoid data leakage and overclaiming:
 ### Running the Benchmark
 
 ```bash
-make benchmark
-# Output: reports/benchmark.json, reports/benchmark.csv, reports/category_breakdown.csv
+python scripts/run_evaluation.py --mode minimal
+# Output: evaluation_outputs/results.json, evaluation_outputs/thresholds.json, evaluation_outputs/per_category.json
 ```
 
 Or from Python directly:
