@@ -134,15 +134,6 @@ def load_injection_records() -> list[ExternalRawRecord]:
     except Exception as e:
         logger.warning(f"[WARN] External raw datasets unavailable: {e}")
 
-    if REAL_INJECTIONS_FILE.exists():
-        records = _load_jsonl_records(
-            REAL_INJECTIONS_FILE,
-            default_label=1,
-            source_dataset="real_injections",
-        )
-        logger.info(f"[OK] Loaded {len(records):,} injection samples from {REAL_INJECTIONS_FILE}")
-        return records
-
     if SAMPLE_INJECTIONS_FILE.exists():
         records = _load_jsonl_records(
             SAMPLE_INJECTIONS_FILE,
@@ -150,6 +141,15 @@ def load_injection_records() -> list[ExternalRawRecord]:
             source_dataset="sample_injections",
         )
         logger.info(f"[OK] Loaded {len(records):,} injection samples from {SAMPLE_INJECTIONS_FILE}")
+        return records
+
+    if REAL_INJECTIONS_FILE.exists():
+        records = _load_jsonl_records(
+            REAL_INJECTIONS_FILE,
+            default_label=1,
+            source_dataset="real_injections",
+        )
+        logger.info(f"[OK] Loaded {len(records):,} injection samples from {REAL_INJECTIONS_FILE}")
         return records
 
     raise FileNotFoundError(
