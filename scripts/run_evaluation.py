@@ -180,7 +180,11 @@ class Phase2Result:
     total: int
     label_dist: dict[int, int]
 
-def phase2_merge(injection_records: list[ExternalRawRecord], benign_records: list[ExternalRawRecord]) -> Phase2Result:
+def phase2_merge(
+    injection_records: list[ExternalRawRecord],
+    benign_records: list[ExternalRawRecord],
+    mode: str,
+) -> Phase2Result:
     logger.info("")
     logger.info("=" * 80)
     logger.info("PHASE 2: MERGE & BALANCE DATASETS")
@@ -208,20 +212,24 @@ def phase2_merge(injection_records: list[ExternalRawRecord], benign_records: lis
     if benign_count == 0 or inj_count == 0:
         raise ValueError("Cannot build a balanced dataset with an empty class.")
 
-    if inj_count >= benign_count:
-        balanced_inj = random.sample(dedup_inj, benign_count)
-        balanced_ben = dedup_ben
+    if mode == MINIMAL_MODE:
+        if inj_count >= benign_count:
+            sampled_inj = random.sample(dedup_inj, benign_count)
+            sampled_ben = dedup_ben
+        else:
+            logger.warning(
+                "[WARN] Injection samples (%d) are fewer than benign (%d). "
+                "Downsampling benign class to keep a balanced minimal set.",
+                inj_count,
+                benign_count,
+            )
+            sampled_inj = dedup_inj
+            sampled_ben = random.sample(dedup_ben, inj_count)
+        merged = sampled_inj + sampled_ben
     else:
-        logger.warning(
-            "[WARN] Injection samples (%d) are fewer than benign (%d). "
-            "Downsampling benign class to keep a balanced evaluation set.",
-            inj_count,
-            benign_count,
-        )
-        balanced_inj = dedup_inj
-        balanced_ben = random.sample(dedup_ben, inj_count)
+        # Full mode uses all available records and preserves real imbalance.
+        merged = dedup_inj + dedup_ben
 
-    merged = balanced_inj + balanced_ben
     random.shuffle(merged)
 
     label_dist = dict(Counter(r.label for r in merged))
@@ -289,9 +297,77 @@ def phase3_split(records: list[ExternalRawRecord]) -> Phase3Result:
 @dataclass
 class Phase4Result:
     scorer: LogisticRegressionScorer
+    semantic_model: Any
     train_time: float
 
-def phase4_train(train_split: DatasetSplit) -> Phase4Result:
+class SemanticBaselineScorer:
+    """Semantic baseline with sentence-transformers fallback to TF-IDF LR."""
+
+    def __init__(self, mode: str) -> None:
+        self.mode = mode
+        self.backend = "tfidf_logreg"
+        self._model = None
+        self._encoder = None
+
+    def fit(self, texts: list[str], labels: list[int]) -> "SemanticBaselineScorer":
+        use_transformer = self.mode == MINIMAL_MODE
+        if use_transformer:
+            try:
+                from sentence_transformers import SentenceTransformer
+
+                encoder = SentenceTransformer("all-MiniLM-L6-v2")
+                embeddings = encoder.encode(texts, show_progress_bar=False)
+                clf = LogisticRegression(
+                    class_weight="balanced",
+                    max_iter=2000,
+                    random_state=SEED,
+                    solver="liblinear",
+                )
+                clf.fit(embeddings, labels)
+                self.backend = "sentence_transformers_logreg"
+                self._encoder = encoder
+                self._model = clf
+                return self
+            except Exception as exc:
+                logger.warning("[WARN] sentence-transformers unavailable, using TF-IDF baseline: %s", exc)
+
+        self._model = Pipeline(
+            [
+                (
+                    "tfidf",
+                    TfidfVectorizer(
+                        ngram_range=(1, 2),
+                        max_features=12000,
+                        sublinear_tf=True,
+                        strip_accents="unicode",
+                        min_df=2,
+                    ),
+                ),
+                (
+                    "clf",
+                    LogisticRegression(
+                        class_weight="balanced",
+                        max_iter=2000,
+                        random_state=SEED,
+                        solver="liblinear",
+                    ),
+                ),
+            ]
+        )
+        self._model.fit(texts, labels)
+        return self
+
+    def score(self, text: str) -> float:
+        if self._model is None:
+            raise RuntimeError("SemanticBaselineScorer not fitted")
+
+        if self.backend == "sentence_transformers_logreg":
+            emb = self._encoder.encode([text], show_progress_bar=False)
+            return float(self._model.predict_proba(emb)[0][1])
+        return float(self._model.predict_proba([text])[0][1])
+
+
+def phase4_train(train_split: DatasetSplit, mode: str) -> Phase4Result:
     logger.info("")
     logger.info("=" * 80)
     logger.info("PHASE 4: TRAIN CLASSIFIER (CONFIG C)")
@@ -304,17 +380,43 @@ def phase4_train(train_split: DatasetSplit) -> Phase4Result:
     start = time.time()
     scorer = LogisticRegressionScorer()
     scorer.fit(texts, labels)
+    semantic_model = SemanticBaselineScorer(mode=mode).fit(texts, labels)
     elapsed = time.time() - start
     
     logger.info(f"[OK] Trained in {elapsed:.2f}s")
-    return Phase4Result(scorer, elapsed)
+    logger.info("[OK] Semantic baseline backend: %s", semantic_model.backend)
+    return Phase4Result(scorer, semantic_model, elapsed)
+
+
+def _model_scores_for_split(
+    split: DatasetSplit,
+    scorer: LogisticRegressionScorer,
+    semantic_model: SemanticBaselineScorer,
+) -> dict[str, list[float]]:
+    texts = split.texts()
+    models = {
+        "Config A: Rules": InjectionDetector(mode="rules"),
+        "Config B: Hybrid": InjectionDetector(mode="hybrid"),
+        "Config C: Full": InjectionDetector(mode="full", classifier=scorer),
+    }
+
+    scores: dict[str, list[float]] = {}
+    for name, detector in models.items():
+        scores[name] = [detector.scan(text).risk_score for text in texts]
+    scores["Semantic Baseline"] = [semantic_model.score(text) for text in texts]
+    return scores
 
 
 # 
 # PHASE 5: FULL EVALUATION
 # 
 
-def phase5_evaluate(val_split: DatasetSplit, test_split: DatasetSplit, scorer: LogisticRegressionScorer):
+def phase5_evaluate(
+    val_split: DatasetSplit,
+    test_split: DatasetSplit,
+    scorer: LogisticRegressionScorer,
+    semantic_model: SemanticBaselineScorer,
+):
     logger.info("")
     logger.info("=" * 80)
     logger.info("PHASE 5: FULL EVALUATION")
@@ -322,32 +424,37 @@ def phase5_evaluate(val_split: DatasetSplit, test_split: DatasetSplit, scorer: L
     
     results = {}
     
-    for config_name, mode in [("Config A: Rules", "rules"), ("Config B: Hybrid", "hybrid"), ("Config C: Full", "full")]:
+    val_scores = _model_scores_for_split(val_split, scorer, semantic_model)
+    test_scores = _model_scores_for_split(test_split, scorer, semantic_model)
+
+    for config_name in ["Config A: Rules", "Config B: Hybrid", "Config C: Full", "Semantic Baseline"]:
         logger.info(f"\nEvaluating {config_name}...")
-        detector = InjectionDetector(mode=mode, classifier=scorer if mode == "full" else None)
-        
-        for split_name, split in [("Validation", val_split), ("Test", test_split)]:
-            y_true = split.labels()
-            texts = split.texts()
-            
-            y_scores = []
-            y_pred = []
-            for text in texts:
-                result = detector.scan(text)
-                y_scores.append(result.risk_score)
-                y_pred.append(1 if result.risk_score >= 0.5 else 0)
-            
+        for split_name, y_true, y_scores in [
+            ("Validation", val_split.labels(), val_scores[config_name]),
+            ("Test", test_split.labels(), test_scores[config_name]),
+        ]:
+            y_pred = [1 if s >= 0.5 else 0 for s in y_scores]
             metrics = compute_metrics(y_true, y_pred, y_scores, 0.5, config_name)
-            
+            pr_auc = average_precision_score(y_true, y_scores)
+
             key = (config_name, split_name)
             results[key] = {
-                "p": metrics.precision,
-                "r": metrics.recall,
-                "f1": metrics.f1,
-                "auc": metrics.roc_auc if metrics.roc_auc else 0.0,
+                "p": float(metrics.precision),
+                "r": float(metrics.recall),
+                "f1": float(metrics.f1),
+                "auc": float(metrics.roc_auc) if metrics.roc_auc else 0.0,
+                "pr_auc": float(pr_auc),
             }
-            
-            logger.info(f"  {split_name}: P={metrics.precision:.3f} R={metrics.recall:.3f} F1={metrics.f1:.3f} AUC={metrics.roc_auc:.3f}")
+
+            logger.info(
+                "  %s: P=%.3f R=%.3f F1=%.3f ROC-AUC=%.3f PR-AUC=%.3f",
+                split_name,
+                metrics.precision,
+                metrics.recall,
+                metrics.f1,
+                metrics.roc_auc if metrics.roc_auc else 0.0,
+                pr_auc,
+            )
     
     return results
 
@@ -369,7 +476,12 @@ def _metrics_at_threshold(
     }
 
 
-def _select_thresholds_from_validation(y_true: list[int], y_scores: list[float]) -> dict[str, float]:
+def _select_thresholds_from_validation(
+    y_true: list[int],
+    y_scores: list[float],
+    *,
+    min_threshold: float = 0.0,
+) -> dict[str, float]:
     candidate_thresholds = sorted({float(s) for s in y_scores})
     candidate_thresholds = [0.0] + candidate_thresholds + [1.0]
 
@@ -396,7 +508,10 @@ def _select_thresholds_from_validation(y_true: list[int], y_scores: list[float])
                     best_tpr = tpr
                     selected = float(threshold)
 
-        return selected if selected is not None else 1.0
+        picked = selected if selected is not None else 1.0
+        return max(min_threshold, picked)
+
+    best_threshold = max(min_threshold, best_threshold)
 
     return {
         "optimal_f1": best_threshold,
@@ -417,21 +532,40 @@ def phase6_threshold(val_split: DatasetSplit, test_split: DatasetSplit, scorer: 
     
     results = {}
     
-    for config_name, mode in [("Config A: Rules", "rules"), ("Config B: Hybrid", "hybrid"), ("Config C: Full", "full")]:
+    raise NotImplementedError("Use phase6_threshold_with_scores")
+
+
+def phase6_threshold_with_scores(
+    val_split: DatasetSplit,
+    test_split: DatasetSplit,
+    val_scores_by_model: dict[str, list[float]],
+    test_scores_by_model: dict[str, list[float]],
+):
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info("PHASE 6: THRESHOLD ANALYSIS")
+    logger.info("=" * 80)
+
+    results: dict[str, Any] = {}
+
+    for config_name in ["Config A: Rules", "Config B: Hybrid", "Config C: Full", "Semantic Baseline"]:
         logger.info(f"\n{config_name}...")
-        detector = InjectionDetector(mode=mode, classifier=scorer if mode == "full" else None)
-        
+
         val_y_true = val_split.labels()
-        val_y_scores = [detector.scan(text).risk_score for text in val_split.texts()]
-        thresholds = _select_thresholds_from_validation(val_y_true, val_y_scores)
+        val_y_scores = val_scores_by_model[config_name]
+        min_threshold = 0.01 if config_name == "Config A: Rules" else 0.0
+        thresholds = _select_thresholds_from_validation(val_y_true, val_y_scores, min_threshold=min_threshold)
 
         test_y_true = test_split.labels()
-        test_y_scores = [detector.scan(text).risk_score for text in test_split.texts()]
+        test_y_scores = test_scores_by_model[config_name]
 
         test_metrics = {
             name: _metrics_at_threshold(test_y_true, test_y_scores, threshold, config_name)
             for name, threshold in thresholds.items()
         }
+
+        for metric_name, metric in test_metrics.items():
+            metric["pr_auc"] = float(average_precision_score(test_y_true, test_y_scores))
 
         results[config_name] = {
             "thresholds": thresholds,
@@ -443,6 +577,84 @@ def phase6_threshold(val_split: DatasetSplit, test_split: DatasetSplit, scorer: 
         logger.info(f"  Threshold @ FPR<=0.01 (val): {thresholds['fpr_le_0_01']:.3f}")
     
     return results
+
+
+def _bootstrap_f1_ci(y_true: list[int], y_pred: list[int], n_bootstrap: int = 500) -> dict[str, float]:
+    rng = np.random.default_rng(SEED)
+    n = len(y_true)
+    if n == 0:
+        return {"f1_mean": 0.0, "f1_ci_lower": 0.0, "f1_ci_upper": 0.0}
+
+    values = []
+    arr_true = np.asarray(y_true)
+    arr_pred = np.asarray(y_pred)
+    for _ in range(n_bootstrap):
+        idx = rng.integers(0, n, n)
+        values.append(float(f1_score(arr_true[idx], arr_pred[idx], zero_division=0)))
+
+    return {
+        "f1_mean": float(np.mean(values)),
+        "f1_ci_lower": float(np.percentile(values, 2.5)),
+        "f1_ci_upper": float(np.percentile(values, 97.5)),
+    }
+
+
+def _infer_attack_category(text: str) -> str:
+    t = text.lower()
+    if any(k in t for k in ["ignore previous", "disregard", "override", "instruction"]):
+        return "instruction_override"
+    if any(k in t for k in ["you are now", "act as", "pretend you are", "role"]):
+        return "role_hijacking"
+    if any(k in t for k in ["base64", "rot13", "unicode", "obfus", "encode", "decode"]):
+        return "obfuscation"
+    return "social_engineering"
+
+
+def build_threshold_sweep(y_true: list[int], y_scores: list[float]) -> list[dict[str, float]]:
+    rows = []
+    for threshold in np.linspace(0, 1, 50):
+        y_pred = [1 if s >= float(threshold) else 0 for s in y_scores]
+        metrics = compute_metrics(y_true, y_pred, y_scores, float(threshold), "sweep")
+        rows.append(
+            {
+                "threshold": round(float(threshold), 4),
+                "precision": float(metrics.precision),
+                "recall": float(metrics.recall),
+                "f1": float(metrics.f1),
+            }
+        )
+    return rows
+
+
+def build_pr_curve(y_true: list[int], y_scores: list[float]) -> dict[str, Any]:
+    precision, recall, pr_thresholds = precision_recall_curve(y_true, y_scores)
+    return {
+        "precision": [float(x) for x in precision],
+        "recall": [float(x) for x in recall],
+        "thresholds": [float(x) for x in pr_thresholds],
+    }
+
+
+def build_per_category_recall(
+    test_split: DatasetSplit,
+    test_scores: list[float],
+    threshold: float,
+) -> dict[str, Any]:
+    cats = ["instruction_override", "role_hijacking", "obfuscation", "social_engineering"]
+    bucket: dict[str, list[int]] = {c: [] for c in cats}
+    for record, score in zip(test_split.records, test_scores):
+        if record.label != 1:
+            continue
+        category = _infer_attack_category(record.text)
+        pred = 1 if score >= threshold else 0
+        bucket[category].append(pred)
+
+    out: dict[str, Any] = {}
+    for category, preds in bucket.items():
+        total = len(preds)
+        recall = (sum(preds) / total) if total else 0.0
+        out[category] = {"n": total, "recall": float(recall)}
+    return out
 
 
 # 
@@ -467,12 +679,26 @@ def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer, th
         
         if pred == 1 and record.label == 0:
             fp += 1
-            if len(fp_samples) < 5:
-                fp_samples.append({"text": record.text[:150], "risk_score": result.risk_score})
+            if len(fp_samples) < 10:
+                fp_samples.append(
+                    {
+                        "text": record.text[:150],
+                        "risk_score": result.risk_score,
+                        "predicted_label": pred,
+                        "true_label": record.label,
+                    }
+                )
         elif pred == 0 and record.label == 1:
             fn += 1
-            if len(fn_samples) < 5:
-                fn_samples.append({"text": record.text[:150], "risk_score": result.risk_score})
+            if len(fn_samples) < 10:
+                fn_samples.append(
+                    {
+                        "text": record.text[:150],
+                        "risk_score": result.risk_score,
+                        "predicted_label": pred,
+                        "true_label": record.label,
+                    }
+                )
     
     logger.info(f"[OK] False positives: {fp:,}")
     logger.info(f"[OK] False negatives: {fn:,}")
@@ -486,8 +712,12 @@ def save_json_outputs(
     phase5_results: dict,
     phase6_results: dict,
     phase7_errors_dict: dict,
+    threshold_sweep_payload: dict[str, Any],
+    pr_curve_payload: dict[str, Any],
+    per_category_payload: dict[str, Any],
+    confidence_intervals: dict[str, Any],
 ) -> None:
-    config_names = ["Config A: Rules", "Config B: Hybrid", "Config C: Full"]
+    config_names = ["Config A: Rules", "Config B: Hybrid", "Config C: Full", "Semantic Baseline"]
 
     results_payload: dict[str, Any] = {
         "dataset": {
@@ -502,7 +732,9 @@ def save_json_outputs(
                 "test": len(phase3.test.records),
             },
         },
-        "primary_threshold": 0.5,
+        "primary_metric": {"threshold": 0.5},
+        "calibrated_metrics": ["optimal_f1", "fpr_le_0_05", "fpr_le_0_01"],
+        "confidence_intervals": confidence_intervals,
         "metrics": {},
     }
 
@@ -534,8 +766,17 @@ def save_json_outputs(
         json.dump(thresholds_payload, f, indent=2)
     with open(OUTPUT_ROOT / "errors.json", "w", encoding="utf-8") as f:
         json.dump(errors_payload, f, indent=2)
+    with open(OUTPUT_ROOT / "threshold_sweep.json", "w", encoding="utf-8") as f:
+        json.dump(threshold_sweep_payload, f, indent=2)
+    with open(OUTPUT_ROOT / "pr_curve.json", "w", encoding="utf-8") as f:
+        json.dump(pr_curve_payload, f, indent=2)
+    with open(OUTPUT_ROOT / "per_category.json", "w", encoding="utf-8") as f:
+        json.dump(per_category_payload, f, indent=2)
 
-    logger.info("[OK] Machine-readable outputs saved: results.json, thresholds.json, errors.json")
+    logger.info(
+        "[OK] Machine-readable outputs saved: results.json, thresholds.json, errors.json, "
+        "threshold_sweep.json, pr_curve.json, per_category.json"
+    )
 
 
 # 
@@ -638,7 +879,15 @@ def phase8_report(phase2_total, phase2_label_dist, phase3, phase5_results, phase
 # MAIN
 # 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Balanced evaluation pipeline")
+    parser.add_argument("--mode", choices=[MINIMAL_MODE, FULL_MODE], default=MINIMAL_MODE)
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    mode = args.mode
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
 
     logger.info("=" * 80)
@@ -659,21 +908,59 @@ def main():
         logger.error("[ERROR] No injection data loaded. Aborting.")
         return
 
-    phase2 = phase2_merge(injection_records, phase1.benign_records)
+    phase2 = phase2_merge(injection_records, phase1.benign_records, mode=mode)
     # Phase 3
     phase3 = phase3_split(phase2.records)
     
     # Phase 4
-    phase4 = phase4_train(phase3.train)
+    phase4 = phase4_train(phase3.train, mode=mode)
     
     # Phase 5
-    phase5_results = phase5_evaluate(phase3.validation, phase3.test, phase4.scorer)
+    phase5_results = phase5_evaluate(phase3.validation, phase3.test, phase4.scorer, phase4.semantic_model)
+
+    val_scores_by_model = _model_scores_for_split(phase3.validation, phase4.scorer, phase4.semantic_model)
+    test_scores_by_model = _model_scores_for_split(phase3.test, phase4.scorer, phase4.semantic_model)
     
     # Phase 6
-    phase6_results = phase6_threshold(phase3.validation, phase3.test, phase4.scorer)
+    phase6_results = phase6_threshold_with_scores(
+        phase3.validation,
+        phase3.test,
+        val_scores_by_model,
+        test_scores_by_model,
+    )
     
     # Phase 7
-    phase7_errors_dict = phase7_errors(phase3.test, phase4.scorer)
+    phase7_errors_dict = phase7_errors(phase3.test, phase4.scorer, threshold=0.5)
+
+    threshold_sweep_payload = {
+        model_name: build_threshold_sweep(phase3.test.labels(), scores)
+        for model_name, scores in test_scores_by_model.items()
+    }
+    pr_curve_payload = {
+        model_name: build_pr_curve(phase3.test.labels(), scores)
+        for model_name, scores in test_scores_by_model.items()
+    }
+
+    config_c_opt = phase6_results["Config C: Full"]["thresholds"]["optimal_f1"]
+    per_category_payload = {
+        "model": "Config C: Full",
+        "threshold": config_c_opt,
+        "recall_by_category": build_per_category_recall(
+            phase3.test,
+            test_scores_by_model["Config C: Full"],
+            config_c_opt,
+        ),
+    }
+
+    y_true_test = phase3.test.labels()
+    y_pred_primary = [1 if s >= 0.5 else 0 for s in test_scores_by_model["Config C: Full"]]
+    y_pred_opt = [1 if s >= config_c_opt else 0 for s in test_scores_by_model["Config C: Full"]]
+    confidence_intervals = {
+        "Config C: Full": {
+            "primary_threshold_0_5": _bootstrap_f1_ci(y_true_test, y_pred_primary),
+            "optimal_threshold": _bootstrap_f1_ci(y_true_test, y_pred_opt),
+        }
+    }
     
     # Phase 8
     report_text = phase8_report(phase2.total, phase2.label_dist, phase3, phase5_results, phase6_results, phase7_errors_dict)
@@ -683,7 +970,17 @@ def main():
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_text)
 
-    save_json_outputs(phase2, phase3, phase5_results, phase6_results, phase7_errors_dict)
+    save_json_outputs(
+        phase2,
+        phase3,
+        phase5_results,
+        phase6_results,
+        phase7_errors_dict,
+        threshold_sweep_payload,
+        pr_curve_payload,
+        per_category_payload,
+        confidence_intervals,
+    )
     
     logger.info(f"\n[OK] Report saved to: {report_path}")
 

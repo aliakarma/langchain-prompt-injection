@@ -1,0 +1,1210 @@
+{
+  "Config A: Rules": [
+    {
+      "threshold": 0.0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0204,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.0408,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.0612,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.0816,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.102,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.1224,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.1429,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.1633,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.1837,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2041,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2245,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2449,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2653,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2857,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3061,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3265,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3469,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3673,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3878,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.4082,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.4286,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.449,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.4694,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.4898,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5102,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5306,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.551,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5714,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5918,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6122,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6327,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6531,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6735,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6939,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.7143,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.7347,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.7551,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.7755,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.7959,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.8163,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.8367,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.8571,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.8776,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.898,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.9184,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.9388,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.9592,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.9796,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 1.0,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    }
+  ],
+  "Config B: Hybrid": [
+    {
+      "threshold": 0.0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0204,
+      "precision": 0.9592,
+      "recall": 0.6267,
+      "f1": 0.7581
+    },
+    {
+      "threshold": 0.0408,
+      "precision": 1.0,
+      "recall": 0.3867,
+      "f1": 0.5577
+    },
+    {
+      "threshold": 0.0612,
+      "precision": 1.0,
+      "recall": 0.3067,
+      "f1": 0.4694
+    },
+    {
+      "threshold": 0.0816,
+      "precision": 1.0,
+      "recall": 0.2933,
+      "f1": 0.4536
+    },
+    {
+      "threshold": 0.102,
+      "precision": 1.0,
+      "recall": 0.28,
+      "f1": 0.4375
+    },
+    {
+      "threshold": 0.1224,
+      "precision": 1.0,
+      "recall": 0.2533,
+      "f1": 0.4043
+    },
+    {
+      "threshold": 0.1429,
+      "precision": 1.0,
+      "recall": 0.2533,
+      "f1": 0.4043
+    },
+    {
+      "threshold": 0.1633,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.1837,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2041,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2245,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2449,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2653,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.2857,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3061,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3265,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3469,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3673,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.3878,
+      "precision": 1.0,
+      "recall": 0.1067,
+      "f1": 0.1928
+    },
+    {
+      "threshold": 0.4082,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.4286,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.449,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.4694,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.4898,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.5102,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.5306,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.551,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.5714,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.5918,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.6122,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.6327,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.6531,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.6735,
+      "precision": 1.0,
+      "recall": 0.04,
+      "f1": 0.0769
+    },
+    {
+      "threshold": 0.6939,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.7143,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.7347,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.7551,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.7755,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.7959,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8163,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8367,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8571,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8776,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.898,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9184,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9388,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9592,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9796,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  ],
+  "Config C: Full": [
+    {
+      "threshold": 0.0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0204,
+      "precision": 0.8621,
+      "recall": 1.0,
+      "f1": 0.9259
+    },
+    {
+      "threshold": 0.0408,
+      "precision": 0.9868,
+      "recall": 1.0,
+      "f1": 0.9934
+    },
+    {
+      "threshold": 0.0612,
+      "precision": 0.9868,
+      "recall": 1.0,
+      "f1": 0.9934
+    },
+    {
+      "threshold": 0.0816,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.102,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.1224,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.1429,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.1633,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.1837,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.2041,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.2245,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.2449,
+      "precision": 1.0,
+      "recall": 0.9867,
+      "f1": 0.9933
+    },
+    {
+      "threshold": 0.2653,
+      "precision": 1.0,
+      "recall": 0.9867,
+      "f1": 0.9933
+    },
+    {
+      "threshold": 0.2857,
+      "precision": 1.0,
+      "recall": 0.9733,
+      "f1": 0.9865
+    },
+    {
+      "threshold": 0.3061,
+      "precision": 1.0,
+      "recall": 0.9467,
+      "f1": 0.9726
+    },
+    {
+      "threshold": 0.3265,
+      "precision": 1.0,
+      "recall": 0.9467,
+      "f1": 0.9726
+    },
+    {
+      "threshold": 0.3469,
+      "precision": 1.0,
+      "recall": 0.9467,
+      "f1": 0.9726
+    },
+    {
+      "threshold": 0.3673,
+      "precision": 1.0,
+      "recall": 0.9467,
+      "f1": 0.9726
+    },
+    {
+      "threshold": 0.3878,
+      "precision": 1.0,
+      "recall": 0.92,
+      "f1": 0.9583
+    },
+    {
+      "threshold": 0.4082,
+      "precision": 1.0,
+      "recall": 0.68,
+      "f1": 0.8095
+    },
+    {
+      "threshold": 0.4286,
+      "precision": 1.0,
+      "recall": 0.3067,
+      "f1": 0.4694
+    },
+    {
+      "threshold": 0.449,
+      "precision": 1.0,
+      "recall": 0.2933,
+      "f1": 0.4536
+    },
+    {
+      "threshold": 0.4694,
+      "precision": 1.0,
+      "recall": 0.2667,
+      "f1": 0.4211
+    },
+    {
+      "threshold": 0.4898,
+      "precision": 1.0,
+      "recall": 0.24,
+      "f1": 0.3871
+    },
+    {
+      "threshold": 0.5102,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5306,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.551,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5714,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.5918,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6122,
+      "precision": 1.0,
+      "recall": 0.2267,
+      "f1": 0.3696
+    },
+    {
+      "threshold": 0.6327,
+      "precision": 1.0,
+      "recall": 0.1067,
+      "f1": 0.1928
+    },
+    {
+      "threshold": 0.6531,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.6735,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.6939,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.7143,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.7347,
+      "precision": 1.0,
+      "recall": 0.0933,
+      "f1": 0.1707
+    },
+    {
+      "threshold": 0.7551,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.7755,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.7959,
+      "precision": 1.0,
+      "recall": 0.0133,
+      "f1": 0.0263
+    },
+    {
+      "threshold": 0.8163,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8367,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8571,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.8776,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.898,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9184,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9388,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9592,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9796,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  ],
+  "Semantic Baseline": [
+    {
+      "threshold": 0.0,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0204,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0408,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0612,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.0816,
+      "precision": 0.5068,
+      "recall": 1.0,
+      "f1": 0.6726
+    },
+    {
+      "threshold": 0.102,
+      "precision": 0.5725,
+      "recall": 1.0,
+      "f1": 0.7282
+    },
+    {
+      "threshold": 0.1224,
+      "precision": 0.6757,
+      "recall": 1.0,
+      "f1": 0.8065
+    },
+    {
+      "threshold": 0.1429,
+      "precision": 0.8152,
+      "recall": 1.0,
+      "f1": 0.8982
+    },
+    {
+      "threshold": 0.1633,
+      "precision": 0.8929,
+      "recall": 1.0,
+      "f1": 0.9434
+    },
+    {
+      "threshold": 0.1837,
+      "precision": 0.9615,
+      "recall": 1.0,
+      "f1": 0.9804
+    },
+    {
+      "threshold": 0.2041,
+      "precision": 0.9868,
+      "recall": 1.0,
+      "f1": 0.9934
+    },
+    {
+      "threshold": 0.2245,
+      "precision": 0.9868,
+      "recall": 1.0,
+      "f1": 0.9934
+    },
+    {
+      "threshold": 0.2449,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.2653,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.2857,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.3061,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.3265,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.3469,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.3673,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.3878,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.4082,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.4286,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.449,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.4694,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.4898,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.5102,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.5306,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.551,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.5714,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.5918,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.6122,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.6327,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "threshold": 0.6531,
+      "precision": 1.0,
+      "recall": 0.9867,
+      "f1": 0.9933
+    },
+    {
+      "threshold": 0.6735,
+      "precision": 1.0,
+      "recall": 0.9733,
+      "f1": 0.9865
+    },
+    {
+      "threshold": 0.6939,
+      "precision": 1.0,
+      "recall": 0.9733,
+      "f1": 0.9865
+    },
+    {
+      "threshold": 0.7143,
+      "precision": 1.0,
+      "recall": 0.96,
+      "f1": 0.9796
+    },
+    {
+      "threshold": 0.7347,
+      "precision": 1.0,
+      "recall": 0.9467,
+      "f1": 0.9726
+    },
+    {
+      "threshold": 0.7551,
+      "precision": 1.0,
+      "recall": 0.9467,
+      "f1": 0.9726
+    },
+    {
+      "threshold": 0.7755,
+      "precision": 1.0,
+      "recall": 0.8933,
+      "f1": 0.9437
+    },
+    {
+      "threshold": 0.7959,
+      "precision": 1.0,
+      "recall": 0.88,
+      "f1": 0.9362
+    },
+    {
+      "threshold": 0.8163,
+      "precision": 1.0,
+      "recall": 0.8533,
+      "f1": 0.9209
+    },
+    {
+      "threshold": 0.8367,
+      "precision": 1.0,
+      "recall": 0.7733,
+      "f1": 0.8722
+    },
+    {
+      "threshold": 0.8571,
+      "precision": 1.0,
+      "recall": 0.7333,
+      "f1": 0.8462
+    },
+    {
+      "threshold": 0.8776,
+      "precision": 1.0,
+      "recall": 0.7067,
+      "f1": 0.8281
+    },
+    {
+      "threshold": 0.898,
+      "precision": 1.0,
+      "recall": 0.6667,
+      "f1": 0.8
+    },
+    {
+      "threshold": 0.9184,
+      "precision": 1.0,
+      "recall": 0.48,
+      "f1": 0.6486
+    },
+    {
+      "threshold": 0.9388,
+      "precision": 1.0,
+      "recall": 0.2667,
+      "f1": 0.4211
+    },
+    {
+      "threshold": 0.9592,
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481
+    },
+    {
+      "threshold": 0.9796,
+      "precision": 1.0,
+      "recall": 0.0133,
+      "f1": 0.0263
+    },
+    {
+      "threshold": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  ]
+}

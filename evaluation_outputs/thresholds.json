@@ -2,7 +2,7 @@
   "selection_split": "validation",
   "thresholds": {
     "Config A: Rules": {
-      "optimal_f1": 0.0,
+      "optimal_f1": 0.01,
       "fpr_le_0_05": 1.0,
       "fpr_le_0_01": 1.0
     },
@@ -15,6 +15,11 @@
       "optimal_f1": 0.3772,
       "fpr_le_0_05": 0.0396,
       "fpr_le_0_01": 0.3772
+    },
+    "Semantic Baseline": {
+      "optimal_f1": 0.6329845849818193,
+      "fpr_le_0_05": 0.17658077808599693,
+      "fpr_le_0_01": 0.6329845849818193
     }
   }
 }
