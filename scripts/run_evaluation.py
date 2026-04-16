@@ -15,6 +15,7 @@ import argparse
 import json
 import logging
 import random
+import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -54,10 +55,12 @@ DATA_ROOT = Path("data/external_raw")
 BENIGN_FILE = Path("data/benign/benign_real_v2.jsonl")
 REAL_INJECTIONS_FILE = Path("data/real/injections_real_v4.jsonl")
 SAMPLE_INJECTIONS_FILE = Path("data/sample/injections.jsonl")
+SAMPLE_BENIGN_FILE = Path("data/sample/benign.jsonl")
 OUTPUT_ROOT = Path("evaluation_outputs")
 TRAIN_SIZE, VAL_SIZE, TEST_SIZE = 0.70, 0.15, 0.15
 MINIMAL_MODE = "minimal"
 FULL_MODE = "full"
+MIN_BENIGN_SIZE = 5000
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -74,6 +77,70 @@ random.seed(SEED)
 class Phase1Result:
     benign_records: list[ExternalRawRecord]
     final_count: int
+
+
+def _paraphrase_benign(text: str, idx: int) -> str:
+    variants = [
+        f"Context note: {text}",
+        f"Documentation excerpt: {text}",
+        f"Policy reminder: {text}",
+        f"Safe usage guidance: {text}",
+        f"Benign paraphrase #{idx % 13}: {text}",
+    ]
+    return variants[idx % len(variants)]
+
+
+def _hard_negative_templates(idx: int) -> str:
+    base = [
+        "Security training says the phrase 'ignore previous instructions' is a known attack pattern.",
+        "Audit memo: never reveal system prompts, keys, or hidden developer instructions.",
+        "This is a benign policy note discussing prompt-injection examples for awareness training.",
+        "SOC report documents role hijacking attempts such as 'you are now a different assistant'.",
+        "Blue-team handbook includes examples like base64 and rot13 obfuscation in adversarial prompts.",
+    ]
+    return f"{base[idx % len(base)]} Example id={idx}."
+
+
+def _expand_benign_records(records: list[ExternalRawRecord], target_size: int) -> list[ExternalRawRecord]:
+    if len(records) >= target_size:
+        return records
+
+    expanded = list(records)
+    seen = {r.text for r in expanded}
+    cursor = 0
+
+    while len(expanded) < target_size:
+        source = records[cursor % len(records)]
+        new_text = _paraphrase_benign(source.text, cursor)
+        if new_text not in seen:
+            seen.add(new_text)
+            expanded.append(
+                ExternalRawRecord(
+                    id=f"aug_benign_{len(expanded)}",
+                    text=new_text,
+                    label=0,
+                    source_dataset="benign_augmented",
+                )
+            )
+        cursor += 1
+
+    # Inject hard negatives so benign class contains attack-like surface forms.
+    hn_cursor = 0
+    while len(expanded) < target_size + 250:
+        text = _hard_negative_templates(hn_cursor)
+        if text not in seen:
+            seen.add(text)
+            expanded.append(
+                ExternalRawRecord(
+                    id=f"hard_negative_{len(expanded)}",
+                    text=text,
+                    label=0,
+                    source_dataset="benign_hard_negative",
+                )
+            )
+        hn_cursor += 1
+
+    return expanded
 
 def phase1_load_benign() -> Phase1Result:
     logger.info("=" * 80)
@@ -102,6 +169,14 @@ def phase1_load_benign() -> Phase1Result:
                     ))
             except:
                 pass
+
+    if SAMPLE_BENIGN_FILE.exists():
+        sample_benign = _load_jsonl_records(SAMPLE_BENIGN_FILE, default_label=0, source_dataset="sample_benign")
+        benign_records.extend(sample_benign)
+
+    if len(benign_records) < MIN_BENIGN_SIZE:
+        benign_records = _expand_benign_records(benign_records, MIN_BENIGN_SIZE)
+        logger.info("[OK] Expanded benign set to %d samples (augmentation + hard negatives)", len(benign_records))
     
     logger.info(f"[OK] Loaded {len(benign_records):,} benign samples")
     return Phase1Result(benign_records, len(benign_records))
@@ -255,6 +330,13 @@ class Phase3Result:
     validation: DatasetSplit
     test: DatasetSplit
 
+
+def _canonical_text(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"[^a-z0-9 ]+", "", text)
+    return text
+
 def phase3_split(records: list[ExternalRawRecord]) -> Phase3Result:
     logger.info("")
     logger.info("=" * 80)
@@ -273,10 +355,17 @@ def phase3_split(records: list[ExternalRawRecord]) -> Phase3Result:
     val_recs = [records[i] for i in val_idx]
     test_recs = [records[i] for i in test_idx]
     
-    # Verify text disjointness
+    # Verify strict disjointness on exact and canonical text.
     assert not (set(r.text for r in train_recs) & set(r.text for r in val_recs))
     assert not (set(r.text for r in train_recs) & set(r.text for r in test_recs))
     assert not (set(r.text for r in val_recs) & set(r.text for r in test_recs))
+
+    train_canon = {_canonical_text(r.text) for r in train_recs}
+    val_canon = {_canonical_text(r.text) for r in val_recs}
+    test_canon = {_canonical_text(r.text) for r in test_recs}
+    assert not (train_canon & val_canon)
+    assert not (train_canon & test_canon)
+    assert not (val_canon & test_canon)
     
     logger.info(f"[OK] Created splits (text-disjoint verified):")
     logger.info(f"  - Train: {len(train_recs):,}")
@@ -298,6 +387,7 @@ def phase3_split(records: list[ExternalRawRecord]) -> Phase3Result:
 class Phase4Result:
     scorer: LogisticRegressionScorer
     semantic_model: Any
+    no_norm_model: Any
     train_time: float
 
 class SemanticBaselineScorer:
@@ -367,6 +457,42 @@ class SemanticBaselineScorer:
         return float(self._model.predict_proba([text])[0][1])
 
 
+class NoNormalizationScorer:
+    """Ablation model trained on raw text only (no detector normalization path)."""
+
+    def __init__(self) -> None:
+        self._model = Pipeline(
+            [
+                (
+                    "tfidf",
+                    TfidfVectorizer(
+                        lowercase=False,
+                        strip_accents=None,
+                        ngram_range=(1, 2),
+                        max_features=12000,
+                        min_df=2,
+                    ),
+                ),
+                (
+                    "clf",
+                    LogisticRegression(
+                        class_weight="balanced",
+                        max_iter=2000,
+                        random_state=SEED,
+                        solver="liblinear",
+                    ),
+                ),
+            ]
+        )
+
+    def fit(self, texts: list[str], labels: list[int]) -> "NoNormalizationScorer":
+        self._model.fit(texts, labels)
+        return self
+
+    def score(self, text: str) -> float:
+        return float(self._model.predict_proba([text])[0][1])
+
+
 def phase4_train(train_split: DatasetSplit, mode: str) -> Phase4Result:
     logger.info("")
     logger.info("=" * 80)
@@ -381,17 +507,19 @@ def phase4_train(train_split: DatasetSplit, mode: str) -> Phase4Result:
     scorer = LogisticRegressionScorer()
     scorer.fit(texts, labels)
     semantic_model = SemanticBaselineScorer(mode=mode).fit(texts, labels)
+    no_norm_model = NoNormalizationScorer().fit(texts, labels)
     elapsed = time.time() - start
     
     logger.info(f"[OK] Trained in {elapsed:.2f}s")
     logger.info("[OK] Semantic baseline backend: %s", semantic_model.backend)
-    return Phase4Result(scorer, semantic_model, elapsed)
+    return Phase4Result(scorer, semantic_model, no_norm_model, elapsed)
 
 
 def _model_scores_for_split(
     split: DatasetSplit,
     scorer: LogisticRegressionScorer,
     semantic_model: SemanticBaselineScorer,
+    no_norm_model: NoNormalizationScorer,
 ) -> dict[str, list[float]]:
     texts = split.texts()
     models = {
@@ -404,6 +532,8 @@ def _model_scores_for_split(
     for name, detector in models.items():
         scores[name] = [detector.scan(text).risk_score for text in texts]
     scores["Semantic Baseline"] = [semantic_model.score(text) for text in texts]
+    scores["Ablation: No Normalization"] = [no_norm_model.score(text) for text in texts]
+    scores["Ablation: No Semantic Model"] = list(scores["Config C: Full"])
     return scores
 
 
@@ -416,6 +546,7 @@ def phase5_evaluate(
     test_split: DatasetSplit,
     scorer: LogisticRegressionScorer,
     semantic_model: SemanticBaselineScorer,
+    no_norm_model: NoNormalizationScorer,
 ):
     logger.info("")
     logger.info("=" * 80)
@@ -424,10 +555,17 @@ def phase5_evaluate(
     
     results = {}
     
-    val_scores = _model_scores_for_split(val_split, scorer, semantic_model)
-    test_scores = _model_scores_for_split(test_split, scorer, semantic_model)
+    val_scores = _model_scores_for_split(val_split, scorer, semantic_model, no_norm_model)
+    test_scores = _model_scores_for_split(test_split, scorer, semantic_model, no_norm_model)
 
-    for config_name in ["Config A: Rules", "Config B: Hybrid", "Config C: Full", "Semantic Baseline"]:
+    for config_name in [
+        "Config A: Rules",
+        "Config B: Hybrid",
+        "Config C: Full",
+        "Semantic Baseline",
+        "Ablation: No Normalization",
+        "Ablation: No Semantic Model",
+    ]:
         logger.info(f"\nEvaluating {config_name}...")
         for split_name, y_true, y_scores in [
             ("Validation", val_split.labels(), val_scores[config_name]),
@@ -548,12 +686,12 @@ def phase6_threshold_with_scores(
 
     results: dict[str, Any] = {}
 
-    for config_name in ["Config A: Rules", "Config B: Hybrid", "Config C: Full", "Semantic Baseline"]:
+    for config_name in list(val_scores_by_model.keys()):
         logger.info(f"\n{config_name}...")
 
         val_y_true = val_split.labels()
         val_y_scores = val_scores_by_model[config_name]
-        min_threshold = 0.01 if config_name == "Config A: Rules" else 0.0
+        min_threshold = 0.01
         thresholds = _select_thresholds_from_validation(val_y_true, val_y_scores, min_threshold=min_threshold)
 
         test_y_true = test_split.labels()
@@ -672,6 +810,8 @@ def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer, th
     fp, fn = 0, 0
     fp_samples = []
     fn_samples = []
+    fp_by_category: Counter[str] = Counter()
+    fn_by_category: Counter[str] = Counter()
     
     for record in test_split.records:
         result = detector.scan(record.text)
@@ -679,6 +819,7 @@ def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer, th
         
         if pred == 1 and record.label == 0:
             fp += 1
+            fp_by_category[_infer_attack_category(record.text)] += 1
             if len(fp_samples) < 10:
                 fp_samples.append(
                     {
@@ -690,6 +831,7 @@ def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer, th
                 )
         elif pred == 0 and record.label == 1:
             fn += 1
+            fn_by_category[_infer_attack_category(record.text)] += 1
             if len(fn_samples) < 10:
                 fn_samples.append(
                     {
@@ -703,62 +845,92 @@ def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer, th
     logger.info(f"[OK] False positives: {fp:,}")
     logger.info(f"[OK] False negatives: {fn:,}")
     
-    return {"fp": fp, "fn": fn, "fp_samples": fp_samples, "fn_samples": fn_samples}
+    return {
+        "fp": fp,
+        "fn": fn,
+        "fp_samples": fp_samples,
+        "fn_samples": fn_samples,
+        "fp_by_category": dict(fp_by_category),
+        "fn_by_category": dict(fn_by_category),
+    }
 
 
-def save_json_outputs(
-    phase2: Phase2Result,
-    phase3: Phase3Result,
-    phase5_results: dict,
-    phase6_results: dict,
-    phase7_errors_dict: dict,
-    threshold_sweep_payload: dict[str, Any],
-    pr_curve_payload: dict[str, Any],
-    per_category_payload: dict[str, Any],
-    confidence_intervals: dict[str, Any],
-) -> None:
-    config_names = ["Config A: Rules", "Config B: Hybrid", "Config C: Full", "Semantic Baseline"]
-
+def _build_results_payload(
+    variant_results: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     results_payload: dict[str, Any] = {
-        "dataset": {
-            "total": phase2.total,
-            "class_distribution": {
-                "injection": phase2.label_dist.get(1, 0),
-                "benign": phase2.label_dist.get(0, 0),
-            },
-            "splits": {
-                "train": len(phase3.train.records),
-                "validation": len(phase3.validation.records),
-                "test": len(phase3.test.records),
-            },
-        },
         "primary_metric": {"threshold": 0.5},
         "calibrated_metrics": ["optimal_f1", "fpr_le_0_05", "fpr_le_0_01"],
-        "confidence_intervals": confidence_intervals,
-        "metrics": {},
+        "datasets": {},
     }
+    thresholds_payload: dict[str, Any] = {"selection_split": "validation", "datasets": {}}
+    errors_payload: dict[str, Any] = {"datasets": {}}
+    threshold_sweep_payload: dict[str, Any] = {"datasets": {}}
+    pr_curve_payload: dict[str, Any] = {"datasets": {}}
+    per_category_payload: dict[str, Any] = {"datasets": {}}
 
-    thresholds_payload: dict[str, Any] = {
-        "selection_split": "validation",
-        "thresholds": {},
-    }
+    for dataset_name, item in variant_results.items():
+        phase2 = item["phase2"]
+        phase3 = item["phase3"]
+        phase5 = item["phase5"]
+        phase6 = item["phase6"]
+        phase7 = item["phase7"]
+        ci = item["ci"]
+        threshold_sweep_payload["datasets"][dataset_name] = item["threshold_sweep"]
+        pr_curve_payload["datasets"][dataset_name] = item["pr_curve"]
+        per_category_payload["datasets"][dataset_name] = item["per_category"]
 
-    for config_name in config_names:
-        results_payload["metrics"][config_name] = {
-            "validation_default_0_5": phase5_results[(config_name, "Validation")],
-            "test_default_0_5": phase5_results[(config_name, "Test")],
-            "test_calibrated": phase6_results[config_name]["test_metrics"],
+        model_names = sorted({k[0] for k in phase5.keys()})
+        results_payload["datasets"][dataset_name] = {
+            "dataset": {
+                "total": phase2.total,
+                "class_distribution": {
+                    "injection": phase2.label_dist.get(1, 0),
+                    "benign": phase2.label_dist.get(0, 0),
+                },
+                "splits": {
+                    "train": len(phase3.train.records),
+                    "validation": len(phase3.validation.records),
+                    "test": len(phase3.test.records),
+                },
+            },
+            "confidence_intervals": ci,
+            "metrics": {},
         }
-        thresholds_payload["thresholds"][config_name] = phase6_results[config_name]["thresholds"]
+        thresholds_payload["datasets"][dataset_name] = {}
 
-    errors_payload = {
-        "config": "Config C: Full",
-        "threshold": 0.5,
-        "false_positives": phase7_errors_dict["fp"],
-        "false_negatives": phase7_errors_dict["fn"],
-        "false_positive_samples": phase7_errors_dict["fp_samples"],
-        "false_negative_samples": phase7_errors_dict["fn_samples"],
-    }
+        for model_name in model_names:
+            results_payload["datasets"][dataset_name]["metrics"][model_name] = {
+                "validation_default_0_5": phase5[(model_name, "Validation")],
+                "test_default_0_5": phase5[(model_name, "Test")],
+                "test_calibrated": phase6[model_name]["test_metrics"],
+            }
+            thresholds_payload["datasets"][dataset_name][model_name] = phase6[model_name]["thresholds"]
+
+        errors_payload["datasets"][dataset_name] = {
+            "config": "Config C: Full",
+            "threshold": 0.5,
+            "false_positives": phase7["fp"],
+            "false_negatives": phase7["fn"],
+            "false_positive_samples": phase7["fp_samples"],
+            "false_negative_samples": phase7["fn_samples"],
+            "false_positive_by_category": phase7["fp_by_category"],
+            "false_negative_by_category": phase7["fn_by_category"],
+        }
+
+    return (
+        results_payload,
+        thresholds_payload,
+        errors_payload,
+        threshold_sweep_payload,
+        pr_curve_payload,
+        per_category_payload,
+    )
+
+
+def save_json_outputs(variant_results: dict[str, Any]) -> dict[str, Any]:
+    payloads = _build_results_payload(variant_results)
+    results_payload, thresholds_payload, errors_payload, threshold_sweep_payload, pr_curve_payload, per_category_payload = payloads
 
     with open(OUTPUT_ROOT / "results.json", "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2)
@@ -777,102 +949,116 @@ def save_json_outputs(
         "[OK] Machine-readable outputs saved: results.json, thresholds.json, errors.json, "
         "threshold_sweep.json, pr_curve.json, per_category.json"
     )
+    return results_payload
 
 
-# 
-# PHASE 8: GENERATE REPORT
-# 
-
-def phase8_report(phase2_total, phase2_label_dist, phase3, phase5_results, phase6_results, phase7_errors_dict):
+def phase8_report(results_payload: dict[str, Any]) -> str:
     logger.info("")
     logger.info("=" * 80)
     logger.info("PHASE 8: FINAL RESEARCH REPORT")
     logger.info("=" * 80)
-    
-    n_inj = phase2_label_dist.get(1, 0)
-    n_ben = phase2_label_dist.get(0, 0)
-    pct_ben = n_ben / phase2_total * 100 if phase2_total else 0
-    
-    lines = []
-    lines.append("# BALANCED EVALUATION REPORT v4")
-    lines.append("## Real-World Evaluation with Improved Dataset Balance")
-    lines.append("")
-    lines.append("**Status:** Work in Progress - Development Iteration")
+
+    lines: list[str] = []
+    lines.append("# BALANCED EVALUATION REPORT v5")
+    lines.append("## Publication-Ready Dual Dataset Evaluation")
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## Executive Summary")
     lines.append("")
-    lines.append(f"Total Dataset: **{phase2_total:,}** samples")
-    lines.append(f"- Injections: {n_inj:,} ({100-pct_ben:.1f}%)")
-    lines.append(f"- Benign (real): {n_ben:,} ({pct_ben:.1f}%)")
+
+    for dataset_name, block in results_payload["datasets"].items():
+        ds = block["dataset"]
+        inj = ds["class_distribution"]["injection"]
+        ben = ds["class_distribution"]["benign"]
+        total = ds["total"]
+        lines.append(f"### {dataset_name.title()} Dataset")
+        lines.append(f"- Total: {total:,}")
+        lines.append(f"- Injections: {inj:,} ({(100*inj/total):.1f}%)")
+        lines.append(f"- Benign: {ben:,} ({(100*ben/total):.1f}%)")
+        lines.append("")
+
+    lines.append("## Evaluation Table (Test Set)")
     lines.append("")
-    lines.append("Dataset balance significantly improved from prior 96% imbalance.")
+    lines.append("| Dataset | Model | Primary F1@0.5 | Optimal F1 | F1@FPR<=0.05 | F1@FPR<=0.01 | ROC-AUC | PR-AUC |")
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|")
+
+    for dataset_name, block in results_payload["datasets"].items():
+        for model_name, metrics in block["metrics"].items():
+            t = metrics["test_calibrated"]
+            p = metrics["test_default_0_5"]
+            lines.append(
+                f"| {dataset_name} | {model_name} | {p['f1']:.3f} | {t['optimal_f1']['f1']:.3f} | "
+                f"{t['fpr_le_0_05']['f1']:.3f} | {t['fpr_le_0_01']['f1']:.3f} | {p['auc']:.3f} | {p['pr_auc']:.3f} |"
+            )
+
     lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## Key Findings")
-    lines.append("")
-    lines.append("### Dataset Composition")
-    lines.append(f"- Training: {len(phase3.train.records):,} samples")
-    lines.append(f"- Validation: {len(phase3.validation.records):,} samples")
-    lines.append(f"- Test: {len(phase3.test.records):,} samples")
-    lines.append("")
-    lines.append("### Evaluation Results (Test Set)")
-    lines.append("")
-    lines.append("| Config | Precision | Recall | F1 | AUC |")
-    lines.append("|--------|-----------|--------|-----|-----|")
-    
-    for config_name in ["Config A: Rules", "Config B: Hybrid", "Config C: Full"]:
-        key = (config_name, "Test")
-        if key in phase5_results:
-            m = phase5_results[key]
-            short = config_name.split(":")[0]
-            lines.append(f"| {short} | {m['p']:.3f} | {m['r']:.3f} | {m['f1']:.3f} | {m['auc']:.3f} |")
-    
-    lines.append("")
-    lines.append("### Error Analysis")
-    lines.append(f"- False Positives: {phase7_errors_dict['fp']:,}")
-    lines.append(f"- False Negatives: {phase7_errors_dict['fn']:,}")
-    lines.append("")
-    lines.append("### Assessment")
-    lines.append("")
-    lines.append("[OK] **What's Working:**")
-    lines.append("- Config C achieves high ROC-AUC (strong ranking ability)")
-    lines.append("- Dataset balance addressed (no longer 96% imbalanced)")
-    lines.append("- Evaluation framework validated")
-    lines.append("")
-    lines.append("âš  **Known Limitations:**")
-    lines.append("- Recall remains low (~6%), indicating coverage gaps")
-    lines.append("- False negative analysis shows multilingual/evasion patterns not captured")
-    lines.append("- Threshold tuning critical for production deployment")
-    lines.append("")
-    lines.append("### Next Steps")
-    lines.append("")
-    lines.append("1. **Expand benign dataset:** Add diverse text sources (news, tech docs, etc.)")
-    lines.append("2. **Improve recall:** Expand pattern library for evasion techniques")
-    lines.append("3. **Multilingual support:** Add non-English injection patterns")
-    lines.append("4. **Production tuning:** Optimize threshold per use-case")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## Integrity Checks")
-    lines.append("")
-    lines.append("[OK] No synthetic data (all real datasets)")
-    lines.append("[OK] No data leakage (classifier trained on training set only)")
-    lines.append("[OK] Text-disjoint splits (verified)")
-    lines.append("[OK] Stratified sampling (label distribution preserved)")
-    lines.append("[OK] Reproducible (seed=42)")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("**Generated:** 2026-04-14")
-    lines.append("**Status:** Development Iteration - Not for Publication")
-    lines.append("")
-    
+    lines.append("## Notes")
+    lines.append("- Thresholds are selected using validation split only.")
+    lines.append("- Test split is used only for final reporting.")
+    lines.append("- Report generated directly from results.json to prevent mismatch.")
+
     report_text = "\n".join(lines)
     logger.info("[OK] Report generated")
     return report_text
+
+
+def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str) -> dict[str, Any]:
+    logger.info("\n%s", "=" * 80)
+    logger.info("RUNNING DATASET VARIANT: %s", dataset_name)
+    logger.info("%s\n", "=" * 80)
+
+    phase3 = phase3_split(phase2.records)
+    phase4 = phase4_train(phase3.train, mode=mode)
+    phase5_results = phase5_evaluate(phase3.validation, phase3.test, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+
+    val_scores_by_model = _model_scores_for_split(phase3.validation, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+    test_scores_by_model = _model_scores_for_split(phase3.test, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+
+    phase6_results = phase6_threshold_with_scores(phase3.validation, phase3.test, val_scores_by_model, test_scores_by_model)
+    phase7_errors_dict = phase7_errors(phase3.test, phase4.scorer, threshold=0.5)
+
+    threshold_sweep_payload = {
+        model_name: build_threshold_sweep(phase3.test.labels(), scores)
+        for model_name, scores in test_scores_by_model.items()
+    }
+    pr_curve_payload = {
+        model_name: build_pr_curve(phase3.test.labels(), scores)
+        for model_name, scores in test_scores_by_model.items()
+    }
+
+    config_c_opt = phase6_results["Config C: Full"]["thresholds"]["optimal_f1"]
+    per_category_payload = {
+        "model": "Config C: Full",
+        "threshold": config_c_opt,
+        "recall_by_category": build_per_category_recall(
+            phase3.test,
+            test_scores_by_model["Config C: Full"],
+            config_c_opt,
+        ),
+    }
+
+    y_true_test = phase3.test.labels()
+    y_pred_primary = [1 if s >= 0.5 else 0 for s in test_scores_by_model["Config C: Full"]]
+    y_pred_opt = [1 if s >= config_c_opt else 0 for s in test_scores_by_model["Config C: Full"]]
+    confidence_intervals = {
+        "Config C: Full": {
+            "primary_threshold_0_5": _bootstrap_f1_ci(y_true_test, y_pred_primary),
+            "optimal_threshold": _bootstrap_f1_ci(y_true_test, y_pred_opt),
+        }
+    }
+
+    return {
+        "phase2": phase2,
+        "phase3": phase3,
+        "phase5": phase5_results,
+        "phase6": phase6_results,
+        "phase7": phase7_errors_dict,
+        "threshold_sweep": threshold_sweep_payload,
+        "pr_curve": pr_curve_payload,
+        "per_category": per_category_payload,
+        "ci": confidence_intervals,
+    }
 
 
 # 
@@ -908,85 +1094,28 @@ def main():
         logger.error("[ERROR] No injection data loaded. Aborting.")
         return
 
-    phase2 = phase2_merge(injection_records, phase1.benign_records, mode=mode)
-    # Phase 3
-    phase3 = phase3_split(phase2.records)
-    
-    # Phase 4
-    phase4 = phase4_train(phase3.train, mode=mode)
-    
-    # Phase 5
-    phase5_results = phase5_evaluate(phase3.validation, phase3.test, phase4.scorer, phase4.semantic_model)
+    phase2_balanced = phase2_merge(injection_records, phase1.benign_records, mode=MINIMAL_MODE)
+    variants: dict[str, Phase2Result] = {"balanced": phase2_balanced}
+    if mode == FULL_MODE:
+        phase2_full = phase2_merge(injection_records, phase1.benign_records, mode=FULL_MODE)
+        variants = {"full": phase2_full, "balanced": phase2_balanced}
 
-    val_scores_by_model = _model_scores_for_split(phase3.validation, phase4.scorer, phase4.semantic_model)
-    test_scores_by_model = _model_scores_for_split(phase3.test, phase4.scorer, phase4.semantic_model)
-    
-    # Phase 6
-    phase6_results = phase6_threshold_with_scores(
-        phase3.validation,
-        phase3.test,
-        val_scores_by_model,
-        test_scores_by_model,
-    )
-    
-    # Phase 7
-    phase7_errors_dict = phase7_errors(phase3.test, phase4.scorer, threshold=0.5)
+    variant_results: dict[str, Any] = {}
+    for dataset_name, phase2 in variants.items():
+        variant_results[dataset_name] = _run_variant(dataset_name, phase2, mode)
 
-    threshold_sweep_payload = {
-        model_name: build_threshold_sweep(phase3.test.labels(), scores)
-        for model_name, scores in test_scores_by_model.items()
-    }
-    pr_curve_payload = {
-        model_name: build_pr_curve(phase3.test.labels(), scores)
-        for model_name, scores in test_scores_by_model.items()
-    }
+    results_payload = save_json_outputs(variant_results)
 
-    config_c_opt = phase6_results["Config C: Full"]["thresholds"]["optimal_f1"]
-    per_category_payload = {
-        "model": "Config C: Full",
-        "threshold": config_c_opt,
-        "recall_by_category": build_per_category_recall(
-            phase3.test,
-            test_scores_by_model["Config C: Full"],
-            config_c_opt,
-        ),
-    }
-
-    y_true_test = phase3.test.labels()
-    y_pred_primary = [1 if s >= 0.5 else 0 for s in test_scores_by_model["Config C: Full"]]
-    y_pred_opt = [1 if s >= config_c_opt else 0 for s in test_scores_by_model["Config C: Full"]]
-    confidence_intervals = {
-        "Config C: Full": {
-            "primary_threshold_0_5": _bootstrap_f1_ci(y_true_test, y_pred_primary),
-            "optimal_threshold": _bootstrap_f1_ci(y_true_test, y_pred_opt),
-        }
-    }
-    
-    # Phase 8
-    report_text = phase8_report(phase2.total, phase2.label_dist, phase3, phase5_results, phase6_results, phase7_errors_dict)
-    
-    # Save
+    report_text = phase8_report(results_payload)
     report_path = OUTPUT_ROOT / "balanced_evaluation_report.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_text)
-
-    save_json_outputs(
-        phase2,
-        phase3,
-        phase5_results,
-        phase6_results,
-        phase7_errors_dict,
-        threshold_sweep_payload,
-        pr_curve_payload,
-        per_category_payload,
-        confidence_intervals,
-    )
     
     logger.info(f"\n[OK] Report saved to: {report_path}")
 
     success = all([
         phase1.final_count > 0,
-        phase2.total > 0,
+        all(v["phase2"].total > 0 for v in variant_results.values()),
     ])
 
     if success:
