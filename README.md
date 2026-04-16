@@ -160,7 +160,7 @@ We provide a **minimal, fully-included, offline-capable sample dataset** so the 
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/langchain-prompt-injection.git
+   git clone https://github.com/aliakarma/langchain-prompt-injection
    cd langchain-prompt-injection
    pip install -r requirements-dev.txt
    ```
