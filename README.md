@@ -165,25 +165,31 @@ We provide a **minimal, fully-included, offline-capable sample dataset** so the 
    pip install -r requirements-dev.txt
    ```
 
-2. **Run ONE command for Minimal Offline Benchmark**
-   ```bash
-   make benchmark
-   ```
-   > This uses the `data/sample` dataset containing 50 total records and executes the complete training and evaluation pipeline locally without requiring an internet connection.
+### 🚀 Canonical Execution (Reviewer)
 
-3. **Run ONE command for Full Benchmark (Requires Internet)**
-   To pull down the extended external datasets (like HackAPrompt) and evaluate the rules against real-world test sets:
-   ```bash
-   bash scripts/download_datasets.sh
-   make benchmark-full
-   ```
+**Linux / macOS:**
+```bash
+# Minimal Offline Benchmark (Smoke Test)
+python scripts/run_evaluation.py --mode minimal
 
-4. **Verify Notebook Reproducibility**
-   ```bash
-   bash scripts/run_notebooks.sh
-   ```
+# Full Benchmark (Requires Internet)
+bash scripts/download_datasets.sh
+python scripts/run_evaluation.py --mode full
+```
 
-Outputs will be saved dynamically to `reports/benchmark.json`, `reports/benchmark.csv`, and printed to your terminal.
+**Windows PowerShell:**
+```powershell
+# Minimal Offline Benchmark (Smoke Test)
+python scripts/run_evaluation.py --mode minimal
+
+# Full Benchmark (Requires Internet; requires Git Bash or WSL for the download script)
+bash scripts/download_datasets.sh
+python scripts/run_evaluation.py --mode full
+```
+
+> *Note: `make benchmark` and `make benchmark-full` are also available as optional shorthand aliases.*
+
+Outputs will be saved dynamically to `evaluation_outputs/results.json`, `evaluation_outputs/per_category.json`, and printed to your terminal.
 
 If you are reviewing this repository, follow these five steps to run the full project in a predictable order.
 
@@ -247,22 +253,37 @@ make test
 
 Run the minimal offline evaluation benchmark to verify everything is working locally:
 
+**Linux / macOS:**
 ```bash
-make benchmark
+python scripts/run_evaluation.py --mode minimal
+```
+
+**Windows PowerShell:**
+```powershell
+python scripts/run_evaluation.py --mode minimal
 ```
 
 To run the full evaluation spanning external datasets:
+
+**Linux / macOS:**
 ```bash
 bash scripts/download_datasets.sh
-make benchmark-full
+python scripts/run_evaluation.py --mode full
+```
+
+**Windows PowerShell:**
+```powershell
+# Requires Git Bash or WSL for the bash download script
+bash scripts/download_datasets.sh
+python scripts/run_evaluation.py --mode full
 ```
 
 Expected output artifacts:
 
-```
-reports/benchmark.json
-reports/benchmark.csv
-reports/category_breakdown.csv
+```text
+evaluation_outputs/results.json
+evaluation_outputs/thresholds.json
+evaluation_outputs/per_category.json
 ```
 
 ---
