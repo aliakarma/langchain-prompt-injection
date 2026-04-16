@@ -156,6 +156,35 @@ $env:PYTHONPATH = "src"
 
 ## 🔍 Reviewer Quick Run
 
+We provide a **minimal, fully-included, offline-capable sample dataset** so the codebase runs smoothly out-of-the-box, complying with ACM artifact evaluation guidelines.
+
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/langchain-prompt-injection.git
+   cd langchain-prompt-injection
+   pip install -r requirements-dev.txt
+   ```
+
+2. **Run ONE command for Minimal Offline Benchmark**
+   ```bash
+   make benchmark
+   ```
+   > This uses the `data/sample` dataset containing 50 total records and executes the complete training and evaluation pipeline locally without requiring an internet connection.
+
+3. **Run ONE command for Full Benchmark (Requires Internet)**
+   To pull down the extended external datasets (like HackAPrompt) and evaluate the rules against real-world test sets:
+   ```bash
+   bash scripts/download_datasets.sh
+   make benchmark-full
+   ```
+
+4. **Verify Notebook Reproducibility**
+   ```bash
+   bash scripts/run_notebooks.sh
+   ```
+
+Outputs will be saved dynamically to `reports/benchmark.json`, `reports/benchmark.csv`, and printed to your terminal.
+
 If you are reviewing this repository, follow these five steps to run the full project in a predictable order.
 
 ### Step 1 — Create and activate a virtual environment
@@ -214,18 +243,18 @@ make test
 make test
 ```
 
-### Step 5 — Run the benchmark (optional but useful for review)
+### Step 5 — Run the evaluation pipeline
 
-**Linux / macOS (recommended):**
+Run the minimal offline evaluation benchmark to verify everything is working locally:
 
 ```bash
 make benchmark
 ```
 
-**Windows PowerShell:**
-
-```powershell
-make benchmark
+To run the full evaluation spanning external datasets:
+```bash
+bash scripts/download_datasets.sh
+make benchmark-full
 ```
 
 Expected output artifacts:

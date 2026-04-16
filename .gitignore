@@ -44,7 +44,7 @@ reports/*.csv
 !reports/failure_analysis.json
 
 # Large datasets
-/data/real/injections_real_v4.jsonl
+# /data/real/injections_real_v4.jsonl (removed to make reproducible)
 
 # Generated raw dataset downloads and split artifacts
 /.tmp_external/
@@ -72,3 +72,4 @@ reports/*.csv
 Thumbs.db
 /.tmp_external
 *.log
+data/real/injections_real_v4.jsonl

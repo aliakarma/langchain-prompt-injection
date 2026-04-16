@@ -72,30 +72,10 @@ demo-rag:
 # ── Benchmark ────────────────────────────────────────────────────────────
 
 benchmark:
-	PYTHONPATH=$(SRC_DIR) $(PYTHON) -c "\
-import sys; sys.path.insert(0,'$(SRC_DIR)'); \
-from prompt_injection.evaluation.dataset import SyntheticDataset; \
-from prompt_injection.evaluation.benchmark import BenchmarkRunner; \
-from prompt_injection.evaluation.report import ReportSerializer; \
-import pathlib; \
-ds = SyntheticDataset(n_injections=250, n_benign=250, seed=42).generate(); \
-tr, te = ds.train_test_split(0.20, seed=42); \
-rw = SyntheticDataset(); \
-[rw.load_from_path(p) for p in pathlib.Path('data/real').glob('*.jsonl')]; \
-ext = SyntheticDataset(); \
-ext_path = pathlib.Path('data/external/synthetic_stress_test.jsonl'); \
-ext.load_external_dataset(ext_path, train_texts=set(tr.texts())) if ext_path.exists() else None; \
-benign = SyntheticDataset(); \
-benign_path = pathlib.Path('data/benign/benign_corpus_v2.jsonl'); \
-benign.load_from_path(benign_path) if benign_path.exists() else None; \
-result = BenchmarkRunner(n_latency_runs=30).run(tr, rw, te, external_eval_dataset=(ext if len(ext) else None), benign_dataset=(benign if len(benign) else None)); \
-s = ReportSerializer(result); \
-s.print_summary(); \
-pathlib.Path('reports').mkdir(exist_ok=True); \
-s.to_json('reports/benchmark.json'); \
-s.to_csv('reports/benchmark.csv'); \
-s.category_csv('reports/category_breakdown.csv'); \
-"
+	$(PYTHON) scripts/run_evaluation.py --mode minimal
+
+benchmark-full:
+	$(PYTHON) scripts/run_evaluation.py --mode full
 
 # ── Notebooks ────────────────────────────────────────────────────────────
 
