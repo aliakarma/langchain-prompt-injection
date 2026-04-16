@@ -1,22 +1,48 @@
 {
-  "model": "Config C: Full",
-  "threshold": 0.3105,
-  "recall_by_category": {
-    "instruction_override": {
-      "n": 7757,
-      "recall": 1.0
+  "datasets": {
+    "full": {
+      "model": "Config C: Full",
+      "threshold": 0.1069,
+      "recall_by_category": {
+        "instruction_override": {
+          "n": 2146,
+          "recall": 1.0
+        },
+        "role_hijacking": {
+          "n": 55,
+          "recall": 1.0
+        },
+        "obfuscation": {
+          "n": 10,
+          "recall": 1.0
+        },
+        "social_engineering": {
+          "n": 540,
+          "recall": 0.9981481481481481
+        }
+      }
     },
-    "role_hijacking": {
-      "n": 223,
-      "recall": 1.0
-    },
-    "obfuscation": {
-      "n": 35,
-      "recall": 1.0
-    },
-    "social_engineering": {
-      "n": 2060,
-      "recall": 0.9966019417475728
+    "balanced": {
+      "model": "Config C: Full",
+      "threshold": 0.3795,
+      "recall_by_category": {
+        "instruction_override": {
+          "n": 575,
+          "recall": 1.0
+        },
+        "role_hijacking": {
+          "n": 24,
+          "recall": 1.0
+        },
+        "obfuscation": {
+          "n": 1,
+          "recall": 1.0
+        },
+        "social_engineering": {
+          "n": 164,
+          "recall": 0.9878048780487805
+        }
+      }
     }
   }
 }

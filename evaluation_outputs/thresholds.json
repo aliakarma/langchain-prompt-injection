@@ -1,25 +1,69 @@
 {
   "selection_split": "validation",
-  "thresholds": {
-    "Config A: Rules": {
-      "optimal_f1": 0.01,
-      "fpr_le_0_05": 1.0,
-      "fpr_le_0_01": 1.0
+  "datasets": {
+    "full": {
+      "Ablation: No Normalization": {
+        "optimal_f1": 0.2250655169329138,
+        "fpr_le_0_05": 0.07419304496092635,
+        "fpr_le_0_01": 0.1937609096717049
+      },
+      "Ablation: No Semantic Model": {
+        "optimal_f1": 0.1069,
+        "fpr_le_0_05": 0.2134,
+        "fpr_le_0_01": 0.4728
+      },
+      "Config A: Rules": {
+        "optimal_f1": 0.01,
+        "fpr_le_0_05": 1.0,
+        "fpr_le_0_01": 1.0
+      },
+      "Config B: Hybrid": {
+        "optimal_f1": 0.01,
+        "fpr_le_0_05": 0.0521,
+        "fpr_le_0_01": 0.7863
+      },
+      "Config C: Full": {
+        "optimal_f1": 0.1069,
+        "fpr_le_0_05": 0.2134,
+        "fpr_le_0_01": 0.4728
+      },
+      "Semantic Baseline": {
+        "optimal_f1": 0.22720159860863026,
+        "fpr_le_0_05": 0.05453679750509889,
+        "fpr_le_0_01": 0.15479958751150183
+      }
     },
-    "Config B: Hybrid": {
-      "optimal_f1": 0.0,
-      "fpr_le_0_05": 0.0201,
-      "fpr_le_0_01": 0.0464
-    },
-    "Config C: Full": {
-      "optimal_f1": 0.3105,
-      "fpr_le_0_05": 0.1808,
-      "fpr_le_0_01": 0.3105
-    },
-    "Semantic Baseline": {
-      "optimal_f1": 0.12096294256920617,
-      "fpr_le_0_05": 0.07892520053553574,
-      "fpr_le_0_01": 0.12096294256920617
+    "balanced": {
+      "Ablation: No Normalization": {
+        "optimal_f1": 0.23884847553793154,
+        "fpr_le_0_05": 0.05927976099805968,
+        "fpr_le_0_01": 0.09366819534668276
+      },
+      "Ablation: No Semantic Model": {
+        "optimal_f1": 0.3795,
+        "fpr_le_0_05": 0.0393,
+        "fpr_le_0_01": 0.4079
+      },
+      "Config A: Rules": {
+        "optimal_f1": 0.01,
+        "fpr_le_0_05": 1.0,
+        "fpr_le_0_01": 1.0
+      },
+      "Config B: Hybrid": {
+        "optimal_f1": 0.0101,
+        "fpr_le_0_05": 0.069,
+        "fpr_le_0_01": 0.6484
+      },
+      "Config C: Full": {
+        "optimal_f1": 0.3795,
+        "fpr_le_0_05": 0.0393,
+        "fpr_le_0_01": 0.4079
+      },
+      "Semantic Baseline": {
+        "optimal_f1": 0.2162188973181083,
+        "fpr_le_0_05": 0.05278980336585914,
+        "fpr_le_0_01": 0.08084707638152044
+      }
     }
   }
 }

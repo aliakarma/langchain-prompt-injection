@@ -61,6 +61,7 @@ TRAIN_SIZE, VAL_SIZE, TEST_SIZE = 0.70, 0.15, 0.15
 MINIMAL_MODE = "minimal"
 FULL_MODE = "full"
 MIN_BENIGN_SIZE = 5000
+DEFAULT_FULL_MAX_SAMPLES = 20000
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s")
 logger = logging.getLogger(__name__)
@@ -370,6 +371,141 @@ def _canonical_text(text: str) -> str:
     text = re.sub(r"[^a-z0-9 ]+", "", text)
     return text
 
+
+def _tokenize(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _cap_records(records: list[ExternalRawRecord], max_samples: int) -> tuple[list[ExternalRawRecord], dict[str, Any]]:
+    if len(records) <= max_samples:
+        return records, {
+            "applied": False,
+            "max_samples": max_samples,
+            "original_size": len(records),
+            "final_size": len(records),
+        }
+
+    idx = list(range(len(records)))
+    y = [records[i].label for i in idx]
+    sampled_idx, _ = train_test_split(
+        idx,
+        train_size=max_samples,
+        random_state=SEED,
+        stratify=y,
+    )
+    sampled = [records[i] for i in sampled_idx]
+    random.shuffle(sampled)
+
+    return sampled, {
+        "applied": True,
+        "max_samples": max_samples,
+        "original_size": len(records),
+        "final_size": len(sampled),
+    }
+
+
+def compute_dataset_difficulty(records: list[ExternalRawRecord]) -> dict[str, Any]:
+    inj = [r for r in records if r.label == 1]
+    ben = [r for r in records if r.label == 0]
+
+    def _avg_len(xs: list[ExternalRawRecord]) -> dict[str, float]:
+        if not xs:
+            return {"chars": 0.0, "tokens": 0.0}
+        char_lens = [len(x.text) for x in xs]
+        tok_lens = [len(_tokenize(x.text)) for x in xs]
+        return {
+            "chars": float(np.mean(char_lens)),
+            "tokens": float(np.mean(tok_lens)),
+        }
+
+    inj_vocab = set(t for r in inj for t in _tokenize(r.text))
+    ben_vocab = set(t for r in ben for t in _tokenize(r.text))
+    union_vocab = inj_vocab | ben_vocab
+    overlap = inj_vocab & ben_vocab
+    vocab_jaccard = (len(overlap) / len(union_vocab)) if union_vocab else 0.0
+
+    all_tokens = sorted(union_vocab)
+    tok_idx = {t: i for i, t in enumerate(all_tokens)}
+    inj_counts = np.zeros(len(all_tokens), dtype=np.float64)
+    ben_counts = np.zeros(len(all_tokens), dtype=np.float64)
+
+    for r in inj:
+        for tok in _tokenize(r.text):
+            inj_counts[tok_idx[tok]] += 1
+    for r in ben:
+        for tok in _tokenize(r.text):
+            ben_counts[tok_idx[tok]] += 1
+
+    if len(all_tokens):
+        inj_dist = (inj_counts + 1.0) / (inj_counts.sum() + len(all_tokens))
+        ben_dist = (ben_counts + 1.0) / (ben_counts.sum() + len(all_tokens))
+        m = 0.5 * (inj_dist + ben_dist)
+        js_div = 0.5 * float(np.sum(inj_dist * np.log(inj_dist / m)) + np.sum(ben_dist * np.log(ben_dist / m)))
+        top_n = 20
+        top_inj_idx = np.argsort(inj_counts)[::-1][:top_n]
+        top_ben_idx = np.argsort(ben_counts)[::-1][:top_n]
+        top_inj = [all_tokens[i] for i in top_inj_idx if inj_counts[i] > 0]
+        top_ben = [all_tokens[i] for i in top_ben_idx if ben_counts[i] > 0]
+    else:
+        js_div = 0.0
+        top_inj = []
+        top_ben = []
+
+    likely_trivial = vocab_jaccard < 0.20 and js_div > 0.25
+    if likely_trivial:
+        separability_note = "Classes appear potentially over-separable (low vocab overlap + high token divergence)."
+    else:
+        separability_note = "Classes do not appear trivially separable by simple lexical statistics alone."
+
+    return {
+        "avg_text_length": {
+            "injection": _avg_len(inj),
+            "benign": _avg_len(ben),
+        },
+        "vocabulary_overlap": {
+            "injection_vocab_size": len(inj_vocab),
+            "benign_vocab_size": len(ben_vocab),
+            "shared_vocab_size": len(overlap),
+            "jaccard": float(vocab_jaccard),
+        },
+        "token_distribution": {
+            "js_divergence": float(js_div),
+            "top_injection_tokens": top_inj,
+            "top_benign_tokens": top_ben,
+        },
+        "trivial_separability_risk": {
+            "likely": bool(likely_trivial),
+            "note": separability_note,
+        },
+    }
+
+
+def _shuffle_text_tokens(text: str, idx: int) -> str:
+    toks = re.findall(r"\S+", text)
+    if len(toks) < 3:
+        return text
+    rng = random.Random(SEED + idx)
+    rng.shuffle(toks)
+    return " ".join(toks)
+
+
+def _slight_perturb_text(text: str, idx: int) -> str:
+    if len(text) < 6:
+        return text
+    rng = random.Random(SEED * 17 + idx)
+    chars = list(text)
+
+    pos = rng.randrange(len(chars))
+    if chars[pos].isalpha():
+        chars[pos] = chars[pos].swapcase()
+    elif chars[pos].isdigit():
+        chars[pos] = str((int(chars[pos]) + 1) % 10)
+
+    if len(chars) > 12:
+        insert_pos = rng.randrange(1, len(chars) - 1)
+        chars.insert(insert_pos, " ")
+    return "".join(chars)
+
 def phase3_split(records: list[ExternalRawRecord]) -> Phase3Result:
     logger.info("")
     logger.info("=" * 80)
@@ -554,7 +690,15 @@ def _model_scores_for_split(
     semantic_model: SemanticBaselineScorer,
     no_norm_model: NoNormalizationScorer,
 ) -> dict[str, list[float]]:
-    texts = split.texts()
+    return _model_scores_for_texts(split.texts(), scorer, semantic_model, no_norm_model)
+
+
+def _model_scores_for_texts(
+    texts: list[str],
+    scorer: LogisticRegressionScorer,
+    semantic_model: SemanticBaselineScorer,
+    no_norm_model: NoNormalizationScorer,
+) -> dict[str, list[float]]:
     models = {
         "Config A: Rules": InjectionDetector(mode="rules"),
         "Config B: Hybrid": InjectionDetector(mode="hybrid"),
@@ -926,8 +1070,11 @@ def _build_results_payload(
                     "validation": len(phase3.validation.records),
                     "test": len(phase3.test.records),
                 },
+                "sampling": item["sampling"],
             },
             "confidence_intervals": ci,
+            "dataset_difficulty": item["dataset_difficulty"],
+            "robustness": item["robustness"],
             "metrics": {},
         }
         thresholds_payload["datasets"][dataset_name] = {}
@@ -1009,6 +1156,34 @@ def phase8_report(results_payload: dict[str, Any]) -> str:
         lines.append(f"- Total: {total:,}")
         lines.append(f"- Injections: {inj:,} ({(100*inj/total):.1f}%)")
         lines.append(f"- Benign: {ben:,} ({(100*ben/total):.1f}%)")
+        sampling = ds.get("sampling", {})
+        if sampling.get("applied"):
+            lines.append(
+                f"- Runtime sampling applied: {sampling['final_size']:,}/{sampling['original_size']:,} "
+                f"(max={sampling['max_samples']:,})"
+            )
+        lines.append("")
+
+    lines.append("## Dataset Difficulty Analysis")
+    lines.append("")
+    for dataset_name, block in results_payload["datasets"].items():
+        diff = block["dataset_difficulty"]
+        lines.append(f"### {dataset_name.title()} Difficulty")
+        lines.append(
+            f"- Avg length (chars): inj={diff['avg_text_length']['injection']['chars']:.1f}, "
+            f"ben={diff['avg_text_length']['benign']['chars']:.1f}"
+        )
+        lines.append(
+            f"- Avg length (tokens): inj={diff['avg_text_length']['injection']['tokens']:.1f}, "
+            f"ben={diff['avg_text_length']['benign']['tokens']:.1f}"
+        )
+        lines.append(
+            f"- Vocabulary overlap (Jaccard): {diff['vocabulary_overlap']['jaccard']:.4f} "
+            f"(shared={diff['vocabulary_overlap']['shared_vocab_size']})"
+        )
+        lines.append(f"- Token distribution JS divergence: {diff['token_distribution']['js_divergence']:.4f}")
+        lines.append(f"- Trivial separability risk: {diff['trivial_separability_risk']['likely']}")
+        lines.append(f"- Note: {diff['trivial_separability_risk']['note']}")
         lines.append("")
 
     lines.append("## Evaluation Table (Test Set)")
@@ -1026,6 +1201,36 @@ def phase8_report(results_payload: dict[str, Any]) -> str:
             )
 
     lines.append("")
+    lines.append("## Performance Comparison (Primary Threshold)")
+    lines.append("")
+    lines.append("| Dataset | Model | Threshold | Precision | Recall | F1 |")
+    lines.append("|---|---|---:|---:|---:|---:|")
+    for dataset_name, block in results_payload["datasets"].items():
+        for model_name, metrics in block["metrics"].items():
+            p = metrics["test_default_0_5"]
+            lines.append(f"| {dataset_name} | {model_name} | 0.50 | {p['p']:.3f} | {p['r']:.3f} | {p['f1']:.3f} |")
+
+    lines.append("")
+    lines.append("## Robustness Check")
+    lines.append("")
+    lines.append("| Dataset | Model | Scenario | F1 | F1 Drop vs Primary |")
+    lines.append("|---|---|---|---:|---:|")
+    for dataset_name, block in results_payload["datasets"].items():
+        rob = block["robustness"]
+        for model_name, scenarios in rob.items():
+            for scenario_name, vals in scenarios.items():
+                lines.append(
+                    f"| {dataset_name} | {model_name} | {scenario_name} | {vals['f1']:.3f} | {vals['f1_drop_vs_primary']:.3f} |"
+                )
+
+    lines.append("")
+    lines.append("## Realism Warnings")
+    lines.append("- Dataset limitations: current corpora are mostly English and 2023-2024 attack styles.")
+    lines.append("- Potential over-separability: lexical overlap and token divergence can make some splits easier than production data.")
+    lines.append("- Balanced vs full differences are expected: balanced improves class parity diagnostics while full preserves real-world imbalance.")
+    lines.append("- Near-perfect semantic baseline scores should not be over-interpreted; they can indicate lexical memorization and benchmark easiness.")
+
+    lines.append("")
     lines.append("## Notes")
     lines.append("- Thresholds are selected using validation split only.")
     lines.append("- Test split is used only for final reporting.")
@@ -1036,7 +1241,7 @@ def phase8_report(results_payload: dict[str, Any]) -> str:
     return report_text
 
 
-def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str) -> dict[str, Any]:
+def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str, sampling_meta: dict[str, Any]) -> dict[str, Any]:
     logger.info("\n%s", "=" * 80)
     logger.info("RUNNING DATASET VARIANT: %s", dataset_name)
     logger.info("%s\n", "=" * 80)
@@ -1050,6 +1255,35 @@ def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str) -> dict[str
 
     phase6_results = phase6_threshold_with_scores(phase3.validation, phase3.test, val_scores_by_model, test_scores_by_model)
     phase7_errors_dict = phase7_errors(phase3.test, phase4.scorer, threshold=0.5)
+    dataset_difficulty = compute_dataset_difficulty(phase2.records)
+
+    primary_test = {
+        model_name: phase5_results[(model_name, "Test")]
+        for model_name in {k[0] for k in phase5_results.keys()}
+    }
+
+    shuffled_texts = [_shuffle_text_tokens(t, i) for i, t in enumerate(phase3.test.texts())]
+    perturbed_texts = [_slight_perturb_text(t, i) for i, t in enumerate(phase3.test.texts())]
+    shuffled_scores = _model_scores_for_texts(shuffled_texts, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+    perturbed_scores = _model_scores_for_texts(perturbed_texts, phase4.scorer, phase4.semantic_model, phase4.no_norm_model)
+
+    robustness: dict[str, Any] = {}
+    y_true_test = phase3.test.labels()
+    for model_name in primary_test.keys():
+        robustness[model_name] = {}
+        for scenario_name, score_map in [
+            ("shuffled_text", shuffled_scores),
+            ("slight_perturbation", perturbed_scores),
+        ]:
+            m = _metrics_at_threshold(y_true_test, score_map[model_name], 0.5, model_name)
+            base_f1 = primary_test[model_name]["f1"]
+            robustness[model_name][scenario_name] = {
+                "threshold": 0.5,
+                "precision": m["p"],
+                "recall": m["r"],
+                "f1": m["f1"],
+                "f1_drop_vs_primary": float(base_f1 - m["f1"]),
+            }
 
     threshold_sweep_payload = {
         model_name: build_threshold_sweep(phase3.test.labels(), scores)
@@ -1071,7 +1305,6 @@ def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str) -> dict[str
         ),
     }
 
-    y_true_test = phase3.test.labels()
     y_pred_primary = [1 if s >= 0.5 else 0 for s in test_scores_by_model["Config C: Full"]]
     y_pred_opt = [1 if s >= config_c_opt else 0 for s in test_scores_by_model["Config C: Full"]]
     confidence_intervals = {
@@ -1091,6 +1324,9 @@ def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str) -> dict[str
         "pr_curve": pr_curve_payload,
         "per_category": per_category_payload,
         "ci": confidence_intervals,
+        "dataset_difficulty": dataset_difficulty,
+        "robustness": robustness,
+        "sampling": sampling_meta,
     }
 
 
@@ -1101,12 +1337,14 @@ def _run_variant(dataset_name: str, phase2: Phase2Result, mode: str) -> dict[str
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Balanced evaluation pipeline")
     parser.add_argument("--mode", choices=[MINIMAL_MODE, FULL_MODE], default=MINIMAL_MODE)
+    parser.add_argument("--full-max-samples", type=int, default=DEFAULT_FULL_MAX_SAMPLES)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     mode = args.mode
+    full_max_samples = args.full_max_samples
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
 
     logger.info("=" * 80)
@@ -1128,14 +1366,33 @@ def main():
         return
 
     phase2_balanced = phase2_merge(injection_records, phase1.benign_records, mode=MINIMAL_MODE)
-    variants: dict[str, Phase2Result] = {"balanced": phase2_balanced}
+    variants: dict[str, tuple[Phase2Result, dict[str, Any]]] = {
+        "balanced": (
+            phase2_balanced,
+            {
+                "applied": False,
+                "max_samples": full_max_samples,
+                "original_size": phase2_balanced.total,
+                "final_size": phase2_balanced.total,
+            },
+        )
+    }
     if mode == FULL_MODE:
         phase2_full = phase2_merge(injection_records, phase1.benign_records, mode=FULL_MODE)
-        variants = {"full": phase2_full, "balanced": phase2_balanced}
+        full_records_capped, cap_meta = _cap_records(phase2_full.records, full_max_samples)
+        phase2_full_capped = Phase2Result(
+            records=full_records_capped,
+            total=len(full_records_capped),
+            label_dist=dict(Counter(r.label for r in full_records_capped)),
+        )
+        variants = {
+            "full": (phase2_full_capped, cap_meta),
+            "balanced": variants["balanced"],
+        }
 
     variant_results: dict[str, Any] = {}
-    for dataset_name, phase2 in variants.items():
-        variant_results[dataset_name] = _run_variant(dataset_name, phase2, mode)
+    for dataset_name, (phase2, sampling_meta) in variants.items():
+        variant_results[dataset_name] = _run_variant(dataset_name, phase2, mode, sampling_meta)
 
     results_payload = save_json_outputs(variant_results)
 
