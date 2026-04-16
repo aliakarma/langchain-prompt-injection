@@ -17,19 +17,19 @@ import random
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any
 import time
 
 import sys
-from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
+from sklearn.metrics import confusion_matrix, f1_score
 from sklearn.model_selection import train_test_split
 
 from src.prompt_injection.detector import InjectionDetector, LogisticRegressionScorer
-from src.prompt_injection.evaluation.metrics import compute_metrics, threshold_sweep
+from src.prompt_injection.evaluation.metrics import compute_metrics
 from src.prompt_injection.evaluation.real_dataset import (
     ExternalRawRecord,
     DatasetSplit,
@@ -134,15 +134,6 @@ def load_injection_records() -> list[ExternalRawRecord]:
     except Exception as e:
         logger.warning(f"[WARN] External raw datasets unavailable: {e}")
 
-    if SAMPLE_INJECTIONS_FILE.exists():
-        records = _load_jsonl_records(
-            SAMPLE_INJECTIONS_FILE,
-            default_label=1,
-            source_dataset="sample_injections",
-        )
-        logger.info(f"[OK] Loaded {len(records):,} injection samples from {SAMPLE_INJECTIONS_FILE}")
-        return records
-
     if REAL_INJECTIONS_FILE.exists():
         records = _load_jsonl_records(
             REAL_INJECTIONS_FILE,
@@ -150,6 +141,15 @@ def load_injection_records() -> list[ExternalRawRecord]:
             source_dataset="real_injections",
         )
         logger.info(f"[OK] Loaded {len(records):,} injection samples from {REAL_INJECTIONS_FILE}")
+        return records
+
+    if SAMPLE_INJECTIONS_FILE.exists():
+        records = _load_jsonl_records(
+            SAMPLE_INJECTIONS_FILE,
+            default_label=1,
+            source_dataset="sample_injections",
+        )
+        logger.info(f"[OK] Loaded {len(records):,} injection samples from {SAMPLE_INJECTIONS_FILE}")
         return records
 
     raise FileNotFoundError(
@@ -175,27 +175,55 @@ def phase2_merge(injection_records: list[ExternalRawRecord], benign_records: lis
     logger.info("PHASE 2: MERGE & BALANCE DATASETS")
     logger.info("=" * 80)
     
-    all_records = injection_records + benign_records
-    
-    # Dedup
-    seen = set()
-    deduped = []
-    for r in all_records:
-        if r.text not in seen:
-            seen.add(r.text)
-            deduped.append(r)
-    
-    label_dist = dict(Counter(r.label for r in deduped))
+    # Dedup each class independently before balancing.
+    dedup_inj: list[ExternalRawRecord] = []
+    dedup_ben: list[ExternalRawRecord] = []
+    seen_inj: set[str] = set()
+    seen_ben: set[str] = set()
+
+    for r in injection_records:
+        if r.text not in seen_inj:
+            seen_inj.add(r.text)
+            dedup_inj.append(r)
+
+    for r in benign_records:
+        if r.text not in seen_ben:
+            seen_ben.add(r.text)
+            dedup_ben.append(r)
+
+    benign_count = len(dedup_ben)
+    inj_count = len(dedup_inj)
+
+    if benign_count == 0 or inj_count == 0:
+        raise ValueError("Cannot build a balanced dataset with an empty class.")
+
+    if inj_count >= benign_count:
+        balanced_inj = random.sample(dedup_inj, benign_count)
+        balanced_ben = dedup_ben
+    else:
+        logger.warning(
+            "[WARN] Injection samples (%d) are fewer than benign (%d). "
+            "Downsampling benign class to keep a balanced evaluation set.",
+            inj_count,
+            benign_count,
+        )
+        balanced_inj = dedup_inj
+        balanced_ben = random.sample(dedup_ben, inj_count)
+
+    merged = balanced_inj + balanced_ben
+    random.shuffle(merged)
+
+    label_dist = dict(Counter(r.label for r in merged))
     n_inj = label_dist.get(1, 0)
     n_ben = label_dist.get(0, 0)
-    pct_ben = n_ben / len(deduped) * 100 if deduped else 0
+    pct_ben = n_ben / len(merged) * 100 if merged else 0
     
     logger.info(f"[OK] Merged dataset:")
-    logger.info(f"  - Total: {len(deduped):,}")
+    logger.info(f"  - Total: {len(merged):,}")
     logger.info(f"  - Injections: {n_inj:,} ({100-pct_ben:.1f}%)")
     logger.info(f"  - Benign: {n_ben:,} ({pct_ben:.1f}%)")
     
-    return Phase2Result(deduped, len(deduped), label_dist)
+    return Phase2Result(merged, len(merged), label_dist)
 
 
 # 
@@ -313,11 +341,64 @@ def phase5_evaluate(val_split: DatasetSplit, test_split: DatasetSplit, scorer: L
     return results
 
 
+def _metrics_at_threshold(
+    y_true: list[int],
+    y_scores: list[float],
+    threshold: float,
+    config_name: str,
+) -> dict[str, float]:
+    y_pred = [1 if score >= threshold else 0 for score in y_scores]
+    metrics = compute_metrics(y_true, y_pred, y_scores, threshold, config_name)
+    return {
+        "threshold": float(threshold),
+        "p": float(metrics.precision),
+        "r": float(metrics.recall),
+        "f1": float(metrics.f1),
+        "auc": float(metrics.roc_auc) if metrics.roc_auc is not None else 0.0,
+    }
+
+
+def _select_thresholds_from_validation(y_true: list[int], y_scores: list[float]) -> dict[str, float]:
+    candidate_thresholds = sorted({float(s) for s in y_scores})
+    candidate_thresholds = [0.0] + candidate_thresholds + [1.0]
+
+    best_threshold = 0.5
+    best_f1 = -1.0
+    for threshold in candidate_thresholds:
+        y_pred = [1 if score >= threshold else 0 for score in y_scores]
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+        if f1 > best_f1 or (f1 == best_f1 and abs(threshold - 0.5) < abs(best_threshold - 0.5)):
+            best_f1 = float(f1)
+            best_threshold = float(threshold)
+
+    def threshold_for_max_fpr(max_fpr: float) -> float:
+        selected: float | None = None
+        best_tpr = -1.0
+
+        for threshold in candidate_thresholds:
+            y_pred = [1 if score >= threshold else 0 for score in y_scores]
+            tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+            fpr = (fp / (fp + tn)) if (fp + tn) else 0.0
+            tpr = (tp / (tp + fn)) if (tp + fn) else 0.0
+            if fpr <= max_fpr:
+                if tpr > best_tpr or (tpr == best_tpr and (selected is None or threshold < selected)):
+                    best_tpr = tpr
+                    selected = float(threshold)
+
+        return selected if selected is not None else 1.0
+
+    return {
+        "optimal_f1": best_threshold,
+        "fpr_le_0_05": threshold_for_max_fpr(0.05),
+        "fpr_le_0_01": threshold_for_max_fpr(0.01),
+    }
+
+
 # 
 # PHASE 6: THRESHOLD ANALYSIS
 # 
 
-def phase6_threshold(val_split: DatasetSplit, scorer: LogisticRegressionScorer):
+def phase6_threshold(val_split: DatasetSplit, test_split: DatasetSplit, scorer: LogisticRegressionScorer):
     logger.info("")
     logger.info("=" * 80)
     logger.info("PHASE 6: THRESHOLD ANALYSIS")
@@ -329,14 +410,26 @@ def phase6_threshold(val_split: DatasetSplit, scorer: LogisticRegressionScorer):
         logger.info(f"\n{config_name}...")
         detector = InjectionDetector(mode=mode, classifier=scorer if mode == "full" else None)
         
-        y_true = val_split.labels()
-        y_scores = [detector.scan(text).risk_score for text in val_split.texts()]
-        
-        sweep_result = threshold_sweep(y_true, y_scores, n_thresholds=100)
-        results[config_name] = {"threshold": sweep_result.best_f1_threshold, "recall_0_8": sweep_result.recall_at_0_8_threshold}
-        
-        logger.info(f"  Best F1 threshold: {sweep_result.best_f1_threshold:.3f}")
-        logger.info(f"  Recall @ 0.8: {sweep_result.recall_at_0_8_threshold:.3f}")
+        val_y_true = val_split.labels()
+        val_y_scores = [detector.scan(text).risk_score for text in val_split.texts()]
+        thresholds = _select_thresholds_from_validation(val_y_true, val_y_scores)
+
+        test_y_true = test_split.labels()
+        test_y_scores = [detector.scan(text).risk_score for text in test_split.texts()]
+
+        test_metrics = {
+            name: _metrics_at_threshold(test_y_true, test_y_scores, threshold, config_name)
+            for name, threshold in thresholds.items()
+        }
+
+        results[config_name] = {
+            "thresholds": thresholds,
+            "test_metrics": test_metrics,
+        }
+
+        logger.info(f"  Optimal threshold (val F1): {thresholds['optimal_f1']:.3f}")
+        logger.info(f"  Threshold @ FPR<=0.05 (val): {thresholds['fpr_le_0_05']:.3f}")
+        logger.info(f"  Threshold @ FPR<=0.01 (val): {thresholds['fpr_le_0_01']:.3f}")
     
     return results
 
@@ -345,7 +438,7 @@ def phase6_threshold(val_split: DatasetSplit, scorer: LogisticRegressionScorer):
 # PHASE 7: ERROR ANALYSIS
 # 
 
-def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer):
+def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer, threshold: float = 0.5):
     logger.info("")
     logger.info("=" * 80)
     logger.info("PHASE 7: ERROR ANALYSIS")
@@ -354,23 +447,84 @@ def phase7_errors(test_split: DatasetSplit, scorer: LogisticRegressionScorer):
     detector = InjectionDetector(mode="full", classifier=scorer)
     
     fp, fn = 0, 0
+    fp_samples = []
     fn_samples = []
     
     for record in test_split.records:
         result = detector.scan(record.text)
-        pred = 1 if result.risk_score >= 0.5 else 0
+        pred = 1 if result.risk_score >= threshold else 0
         
         if pred == 1 and record.label == 0:
             fp += 1
+            if len(fp_samples) < 5:
+                fp_samples.append({"text": record.text[:150], "risk_score": result.risk_score})
         elif pred == 0 and record.label == 1:
             fn += 1
             if len(fn_samples) < 5:
-                fn_samples.append((record.text[:150], result.risk_score))
+                fn_samples.append({"text": record.text[:150], "risk_score": result.risk_score})
     
     logger.info(f"[OK] False positives: {fp:,}")
     logger.info(f"[OK] False negatives: {fn:,}")
     
-    return {"fp": fp, "fn": fn, "fn_samples": fn_samples}
+    return {"fp": fp, "fn": fn, "fp_samples": fp_samples, "fn_samples": fn_samples}
+
+
+def save_json_outputs(
+    phase2: Phase2Result,
+    phase3: Phase3Result,
+    phase5_results: dict,
+    phase6_results: dict,
+    phase7_errors_dict: dict,
+) -> None:
+    config_names = ["Config A: Rules", "Config B: Hybrid", "Config C: Full"]
+
+    results_payload: dict[str, Any] = {
+        "dataset": {
+            "total": phase2.total,
+            "class_distribution": {
+                "injection": phase2.label_dist.get(1, 0),
+                "benign": phase2.label_dist.get(0, 0),
+            },
+            "splits": {
+                "train": len(phase3.train.records),
+                "validation": len(phase3.validation.records),
+                "test": len(phase3.test.records),
+            },
+        },
+        "primary_threshold": 0.5,
+        "metrics": {},
+    }
+
+    thresholds_payload: dict[str, Any] = {
+        "selection_split": "validation",
+        "thresholds": {},
+    }
+
+    for config_name in config_names:
+        results_payload["metrics"][config_name] = {
+            "validation_default_0_5": phase5_results[(config_name, "Validation")],
+            "test_default_0_5": phase5_results[(config_name, "Test")],
+            "test_calibrated": phase6_results[config_name]["test_metrics"],
+        }
+        thresholds_payload["thresholds"][config_name] = phase6_results[config_name]["thresholds"]
+
+    errors_payload = {
+        "config": "Config C: Full",
+        "threshold": 0.5,
+        "false_positives": phase7_errors_dict["fp"],
+        "false_negatives": phase7_errors_dict["fn"],
+        "false_positive_samples": phase7_errors_dict["fp_samples"],
+        "false_negative_samples": phase7_errors_dict["fn_samples"],
+    }
+
+    with open(OUTPUT_ROOT / "results.json", "w", encoding="utf-8") as f:
+        json.dump(results_payload, f, indent=2)
+    with open(OUTPUT_ROOT / "thresholds.json", "w", encoding="utf-8") as f:
+        json.dump(thresholds_payload, f, indent=2)
+    with open(OUTPUT_ROOT / "errors.json", "w", encoding="utf-8") as f:
+        json.dump(errors_payload, f, indent=2)
+
+    logger.info("[OK] Machine-readable outputs saved: results.json, thresholds.json, errors.json")
 
 
 # 
@@ -505,7 +659,7 @@ def main():
     phase5_results = phase5_evaluate(phase3.validation, phase3.test, phase4.scorer)
     
     # Phase 6
-    phase6_results = phase6_threshold(phase3.validation, phase4.scorer)
+    phase6_results = phase6_threshold(phase3.validation, phase3.test, phase4.scorer)
     
     # Phase 7
     phase7_errors_dict = phase7_errors(phase3.test, phase4.scorer)
@@ -517,6 +671,8 @@ def main():
     report_path = OUTPUT_ROOT / "balanced_evaluation_report.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_text)
+
+    save_json_outputs(phase2, phase3, phase5_results, phase6_results, phase7_errors_dict)
     
     logger.info(f"\n[OK] Report saved to: {report_path}")
 

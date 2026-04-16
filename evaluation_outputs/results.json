@@ -1,0 +1,128 @@
+{
+  "dataset": {
+    "total": 1000,
+    "class_distribution": {
+      "injection": 500,
+      "benign": 500
+    },
+    "splits": {
+      "train": 700,
+      "validation": 150,
+      "test": 150
+    }
+  },
+  "primary_threshold": 0.5,
+  "metrics": {
+    "Config A: Rules": {
+      "validation_default_0_5": {
+        "p": 1.0,
+        "r": 0.3333,
+        "f1": 0.5,
+        "auc": 0.6667
+      },
+      "test_default_0_5": {
+        "p": 1.0,
+        "r": 0.2267,
+        "f1": 0.3696,
+        "auc": 0.6133
+      },
+      "test_calibrated": {
+        "optimal_f1": {
+          "threshold": 0.0,
+          "p": 0.5,
+          "r": 1.0,
+          "f1": 0.6667,
+          "auc": 0.6133
+        },
+        "fpr_le_0_05": {
+          "threshold": 1.0,
+          "p": 1.0,
+          "r": 0.2267,
+          "f1": 0.3696,
+          "auc": 0.6133
+        },
+        "fpr_le_0_01": {
+          "threshold": 1.0,
+          "p": 1.0,
+          "r": 0.2267,
+          "f1": 0.3696,
+          "auc": 0.6133
+        }
+      }
+    },
+    "Config B: Hybrid": {
+      "validation_default_0_5": {
+        "p": 1.0,
+        "r": 0.1067,
+        "f1": 0.1928,
+        "auc": 0.8068
+      },
+      "test_default_0_5": {
+        "p": 1.0,
+        "r": 0.0933,
+        "f1": 0.1707,
+        "auc": 0.8604
+      },
+      "test_calibrated": {
+        "optimal_f1": {
+          "threshold": 0.0157,
+          "p": 0.8056,
+          "r": 0.7733,
+          "f1": 0.7891,
+          "auc": 0.8604
+        },
+        "fpr_le_0_05": {
+          "threshold": 0.0197,
+          "p": 0.8889,
+          "r": 0.64,
+          "f1": 0.7442,
+          "auc": 0.8604
+        },
+        "fpr_le_0_01": {
+          "threshold": 0.1253,
+          "p": 1.0,
+          "r": 0.2533,
+          "f1": 0.4043,
+          "auc": 0.8604
+        }
+      }
+    },
+    "Config C: Full": {
+      "validation_default_0_5": {
+        "p": 1.0,
+        "r": 0.3333,
+        "f1": 0.5,
+        "auc": 1.0
+      },
+      "test_default_0_5": {
+        "p": 1.0,
+        "r": 0.2267,
+        "f1": 0.3696,
+        "auc": 1.0
+      },
+      "test_calibrated": {
+        "optimal_f1": {
+          "threshold": 0.3772,
+          "p": 1.0,
+          "r": 0.9333,
+          "f1": 0.9655,
+          "auc": 1.0
+        },
+        "fpr_le_0_05": {
+          "threshold": 0.0396,
+          "p": 0.9868,
+          "r": 1.0,
+          "f1": 0.9934,
+          "auc": 1.0
+        },
+        "fpr_le_0_01": {
+          "threshold": 0.3772,
+          "p": 1.0,
+          "r": 0.9333,
+          "f1": 0.9655,
+          "auc": 1.0
+        }
+      }
+    }
+  }
+}
